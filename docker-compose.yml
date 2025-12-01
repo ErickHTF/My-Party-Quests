@@ -1,0 +1,15 @@
+services:
+
+  postgres:
+    image: postgres:13.22
+    container_name: Sprint
+    restart: always
+    environment:
+      POSTGRES_USER: Sprint_user
+      POSTGRES_PASSWORD: Sprint_pass
+      POSTGRES_DB: Sprint_DB
+    ports:
+      - "5433:5432"
+
+volumes:
+  postgres_data:
