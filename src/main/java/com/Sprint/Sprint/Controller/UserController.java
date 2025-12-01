@@ -1,6 +1,8 @@
 package com.Sprint.Sprint.Controller;
 
+import com.Sprint.Sprint.Entity.RegisterDTO;
 import com.Sprint.Sprint.Entity.User;
+import com.Sprint.Sprint.Repository.UserRepository;
 import com.Sprint.Sprint.Service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -18,6 +20,9 @@ import java.util.List;
 public class UserController {
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private UserService userService;
 
     @Operation(summary = "Get All Users",
@@ -33,17 +38,8 @@ public class UserController {
         return userService.findAllUsers();
     }
 
-    @Operation(summary = "Create User",
-            description = "Cria um novo usuário.")
-    @PostMapping
-    public ResponseEntity<User> saveUser(@RequestBody User user) {
-        User userSaved = userService.createUser(user);
-
-        return ResponseEntity.status(201).body(userSaved);
-    }
-
     @Operation(summary = "Delete User",
-            description = "Remove um novo usuário.")
+            description = "Delete a existent user.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Usuário removido com sucesso"),
             @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
