@@ -1,6 +1,5 @@
 package com.Sprint.Sprint.Controller;
 
-import com.Sprint.Sprint.Entity.RegisterDTO;
 import com.Sprint.Sprint.Entity.User;
 import com.Sprint.Sprint.Repository.UserRepository;
 import com.Sprint.Sprint.Service.UserService;

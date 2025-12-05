@@ -1,8 +1,10 @@
 package com.Sprint.Sprint.Controller;
 
-import com.Sprint.Sprint.Entity.AuthenticationDTO;
-import com.Sprint.Sprint.Entity.RegisterDTO;
+import com.Sprint.Sprint.DTO.Request.AuthenticationDTO;
+import com.Sprint.Sprint.DTO.Response.LoginResponseDTO;
+import com.Sprint.Sprint.DTO.Request.RegisterDTO;
 import com.Sprint.Sprint.Entity.User;
+import com.Sprint.Sprint.Security.TokenService;
 import com.Sprint.Sprint.Repository.UserRepository;
 import com.Sprint.Sprint.Service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +32,9 @@ public class AuthenticationController {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    @Autowired
+    private TokenService tokenService;
+
     @Operation(summary = "Create User",
             description = "Creates a new user.")
     @PostMapping("/register")
@@ -50,7 +55,9 @@ public class AuthenticationController {
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.username(), data.password());
         var authentication = this.authenticationManager.authenticate(usernamePassword);
 
-        return ResponseEntity.ok().build();
+        var token = tokenService.generateToken((User) authentication.getPrincipal());
+
+        return ResponseEntity.ok(new LoginResponseDTO(token));
     }
 
 
