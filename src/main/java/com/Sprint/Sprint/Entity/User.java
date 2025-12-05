@@ -1,5 +1,6 @@
 package com.Sprint.Sprint.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -27,6 +28,9 @@ public class User implements UserDetails {
     @Column (nullable = false)
     private String password;
 
+    @Column (nullable = false)
+    private UserRole role;
+
     public UserRole getRole() {
         return role;
     }
@@ -34,9 +38,6 @@ public class User implements UserDetails {
     public void setRole(UserRole role) {
         this.role = role;
     }
-
-    @Column (nullable = false)
-    private UserRole role;
 
     public User(String username, String nickname, String password, UserRole role) {
         this.username = username;
@@ -105,6 +106,19 @@ public class User implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (this.role == UserRole.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
         else return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+    }
+
+    @ManyToOne
+    @JoinColumn(name = "party_id")
+    @JsonIgnore //
+    private Party currentParty;
+
+    public Party getCurrentParty() {
+        return currentParty;
+    }
+
+    public void setCurrentParty(Party currentParty) {
+        this.currentParty = currentParty;
     }
 
 }
