@@ -1,4 +1,4 @@
-package com.Sprint.Sprint.Entity;
+package com.Sprint.Sprint.Enums;
 
 public enum QuestRarity
 {
