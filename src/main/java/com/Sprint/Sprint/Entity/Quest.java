@@ -1,7 +1,8 @@
 package com.Sprint.Sprint.Entity;
 
+import com.Sprint.Sprint.Enums.QuestRarity;
+import com.Sprint.Sprint.Enums.QuestStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
@@ -25,12 +26,23 @@ public class Quest {
     @Column (nullable = false)
     private Integer goldReward;
 
+    @Enumerated(EnumType.STRING)
+    private QuestStatus status = QuestStatus.DRAFT; //Standard DRAFT
+
+    @Column(length = 500)
+    private String reviewerFeedback;
+
+    @ManyToOne
+    @JoinColumn(name = "reviewer_id")
+    private User reviewer;
+
     @ManyToOne
     @JoinColumn(name = "adventurer_id")
     private User adventurer;
 
     @ManyToOne
     @JoinColumn(name = "party_id")
+
     private Party party;
 
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -99,5 +111,29 @@ public class Quest {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public QuestStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(QuestStatus status) {
+        this.status = status;
+    }
+
+    public String getReviewerFeedback() {
+        return reviewerFeedback;
+    }
+
+    public void setReviewerFeedback(String reviewerFeedback) {
+        this.reviewerFeedback = reviewerFeedback;
+    }
+
+    public User getReviewer() {
+        return reviewer;
+    }
+
+    public void setReviewer(User reviewer) {
+        this.reviewer = reviewer;
     }
 }

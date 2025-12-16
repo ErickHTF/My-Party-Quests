@@ -1,6 +1,6 @@
 package com.Sprint.Sprint.DTO.Request;
 
-import com.Sprint.Sprint.Entity.QuestRarity;
+import com.Sprint.Sprint.Enums.QuestRarity;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

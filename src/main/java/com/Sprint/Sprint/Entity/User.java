@@ -1,5 +1,6 @@
 package com.Sprint.Sprint.Entity;
 
+import com.Sprint.Sprint.Enums.UserRole;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;

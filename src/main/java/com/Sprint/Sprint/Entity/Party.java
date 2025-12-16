@@ -1,15 +1,9 @@
 package com.Sprint.Sprint.Entity;
 
+import com.Sprint.Sprint.Enums.PartyStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
-
-// Vamos criar o Enum aqui ou em arquivo separado
-enum PartyStatus {
-    OPEN,
-    CLOSED,
-    IN_GAME
-}
 
 @Entity
 @Table(name = "tb_parties")
@@ -30,7 +24,17 @@ public class Party {
     private User owner;
 
     @Enumerated(EnumType.STRING)
-    private PartyStatus partyStatus = PartyStatus.OPEN; // Standard open
+    private PartyStatus partyStatus = PartyStatus.LOBBY; // Standard open
+
+    @ManyToMany
+    @JoinTable(
+            name = "tb_party_members", //
+            joinColumns = @JoinColumn(name = "party_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private java.util.List<User> members;
+
+    private LocalDateTime currentPhaseExpiration;
 
     private LocalDateTime RunEndDate;
 
@@ -80,5 +84,21 @@ public class Party {
 
     public void setRunEndDate(LocalDateTime runEndDate) {
         RunEndDate = runEndDate;
+    }
+
+    public LocalDateTime getCurrentPhaseExpiration() {
+        return currentPhaseExpiration;
+    }
+
+    public void setCurrentPhaseExpiration(LocalDateTime currentPhaseExpiration) {
+        this.currentPhaseExpiration = currentPhaseExpiration;
+    }
+
+    public java.util.List<User> getMembers() {
+        return members;
+    }
+
+    public void setMembers(java.util.List<User> members) {
+        this.members = members;
     }
 }
