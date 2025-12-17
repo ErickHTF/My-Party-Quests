@@ -100,6 +100,9 @@ public class PartyService {
                 )
                 .toList();
 
+        List<Quest> questsToDelete = questRepository.findByParty(party);
+        questRepository.deleteAll(questsToDelete);
+
         members.forEach(u -> u.setCurrentParty(null));
         userRepository.saveAll(members);
 
@@ -112,7 +115,7 @@ public class PartyService {
         Party party = partyRepository.findById(partyId)
                 .orElseThrow(() -> new RuntimeException("Party not found."));
 
-        if (party.getOwner().getId().equals(loggedUser.getId())) {
+        if (!party.getOwner().getId().equals(loggedUser.getId())) {
             throw new RuntimeException("Only the owner can start the sprint.");
         }
 
@@ -141,37 +144,22 @@ public class PartyService {
         }
 
         List<Quest> partyQuests = questRepository.findByParty(party);
-        List<User> members = party.getMembers();
 
-        if (members.size() < 2) {// In case of solo playing
+        if (partyQuests.isEmpty()) {
+            throw new RuntimeException("Cannot start Sprint without quests.");
         }
 
-        Random random = new Random();
+        boolean hasPendingIssues = partyQuests.stream()
+                .anyMatch(q -> q.getStatus() != QuestStatus.APPROVED);
 
-        for (Quest quest : partyQuests) {
-            if (quest.getReviewer() != null) continue;
-
-            // Choose a random member who is NOT the quest owner.
-            List<User> potentialReviewers = members.stream()
-                    .filter(m -> !m.getId().equals(quest.getAdventurer().getId()))
-                    .toList();
-
-            if (!potentialReviewers.isEmpty()) {
-                User selectedReviewer = potentialReviewers.get(random.nextInt(potentialReviewers.size()));
-
-                quest.setReviewer(selectedReviewer);
-                quest.setStatus(QuestStatus.PENDING_APPROVAL);
-            } else { // Fallback / Auto Approve
-                quest.setReviewer(quest.getAdventurer());
-                quest.setStatus(QuestStatus.APPROVED); //
-            }
-                questRepository.save(quest);
+        if (hasPendingIssues) {
+            throw new RuntimeException("Cannot start Sprint! All quests must be APPROVED first.");
         }
+
         party.setPartyStatus(PartyStatus.EXECUTION);
-        party.setCurrentPhaseExpiration(LocalDateTime.now().plusDays(5)); // Sprint duration
+        party.setCurrentPhaseExpiration(LocalDateTime.now().plusDays(5));
 
         return partyRepository.save(party);
-
     }
 
 }

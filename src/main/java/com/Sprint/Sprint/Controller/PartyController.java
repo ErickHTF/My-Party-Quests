@@ -106,4 +106,32 @@ public class PartyController {
         partyService.deleteParty(id, loggedUser);
         return ResponseEntity.ok("Party successfully deleted.");
     }
+
+    @Operation(summary = "Start Planning Phase", description = "Moves the party from LOBBY to PLANNING. Only the owner can do this.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Phase changed to PLANNING"),
+            @ApiResponse(responseCode = "403", description = "User is not the owner"),
+            @ApiResponse(responseCode = "400", description = "Invalid previous status (Must be LOBBY or REVIEW)")
+    })
+    @PostMapping("/{id}/start-planning")
+    public ResponseEntity<PartyResponseDTO> startPlanning(@PathVariable Long id,
+                                                          @AuthenticationPrincipal User user) {
+
+        Party party = partyService.startPlanningPhase(id, user);
+        return ResponseEntity.ok(new PartyResponseDTO(party));
+    }
+
+    @Operation(summary = "Start Execution Phase", description = "Moves the party from PLANNING to EXECUTION and assigns reviewers.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Phase changed to EXECUTION, reviewers assigned"),
+            @ApiResponse(responseCode = "403", description = "User is not the owner"),
+            @ApiResponse(responseCode = "400", description = "Invalid previous status (Must be PLANNING)")
+    })
+    @PostMapping("/{id}/start-execution")
+    public ResponseEntity<PartyResponseDTO> startExecution(@PathVariable Long id,
+                                                           @AuthenticationPrincipal User user) {
+
+        Party party = partyService.startExecutionPhase(id, user);
+        return ResponseEntity.ok(new PartyResponseDTO(party));
+    }
 }

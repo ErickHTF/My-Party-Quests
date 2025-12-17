@@ -1,19 +1,28 @@
 package com.Sprint.Sprint.Service;
 
 import com.Sprint.Sprint.DTO.Request.CreateQuestDTO;
+import com.Sprint.Sprint.DTO.Request.ReviewQuestDTO;
+import com.Sprint.Sprint.Enums.QuestStatus;
 import com.Sprint.Sprint.Entity.Party;
 import com.Sprint.Sprint.Entity.Quest;
 import com.Sprint.Sprint.Entity.User;
 import com.Sprint.Sprint.Enums.PartyStatus;
 import com.Sprint.Sprint.Repository.QuestRepository;
+import com.Sprint.Sprint.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Random;
 
 @Service
 public class QuestService {
 
     @Autowired
     private QuestRepository questRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public Quest createQuest(CreateQuestDTO data, User adventurer) {
 
@@ -23,18 +32,17 @@ public class QuestService {
             throw new RuntimeException("Party needed, adventurer");
         }
 
-        if (currentParty.getPartyStatus() != PartyStatus.PLANNING) {
-            throw new RuntimeException("Cannot create quests now. The party is in "
-                    + currentParty.getPartyStatus() + " phase.");
+        if (currentParty == null || currentParty.getPartyStatus() != PartyStatus.PLANNING) {
+            throw new RuntimeException("You can only create quests during the PLANNING phase.");
         }
 
-        //montando objeto
+        //mounting object
         Quest quest = new Quest();
         quest.setTitle(data.title());
         quest.setDescription(data.description());
         quest.setRarity(data.rarity());
 
-        //vinculando objeto com current party
+        //linking object (quest) with current party
         quest.setAdventurer(adventurer);
         quest.setParty(adventurer.getCurrentParty());
 
@@ -45,6 +53,62 @@ public class QuestService {
             case LEGENDARY -> 700;
         };
         quest.setGoldReward(goldAmount);
+
+        List<User> members = userRepository.findByCurrentParty(currentParty);
+        Random random = new Random();
+
+        List<User> potentialReviewers = members.stream()
+                .filter(m -> !m.getId().equals(adventurer.getId()))
+                .toList();
+
+        if (!potentialReviewers.isEmpty()) {
+            User selectedReviewer = potentialReviewers.get(random.nextInt(potentialReviewers.size()));
+            quest.setReviewer(selectedReviewer);
+        } else {
+            quest.setReviewer(adventurer);
+        }
+
+        quest.setStatus(QuestStatus.PENDING_APPROVAL);
+
+        return questRepository.save(quest);
+    }
+
+    public Quest reviewQuest(Long questId, ReviewQuestDTO data, User loggedUser) {
+        Quest quest = questRepository.findById(questId)
+                .orElseThrow(() -> new RuntimeException("Quest not found."));
+
+        if (quest.getReviewer() == null || !quest.getReviewer().getId().equals(loggedUser.getId())) {
+            throw new RuntimeException("You are not the assigned reviewer for this quest.");
+        }
+
+        if (quest.getStatus() != QuestStatus.PENDING_APPROVAL) {
+            throw new RuntimeException("Quest not pending approval.");
+        }
+
+        if (data.approved()) {
+            quest.setStatus(QuestStatus.APPROVED);
+        } else {
+            quest.setStatus(QuestStatus.REJECTED);
+        }
+
+        quest.setReviewerFeedback(data.feedback());
+
+        return questRepository.save(quest);
+    }
+
+    public Quest completeQuest(Long questId, User loggedUser) {
+        Quest quest = questRepository.findById(questId)
+                .orElseThrow(() -> new RuntimeException("Quest not found."));
+
+        if (!quest.getAdventurer().getId().equals(loggedUser.getId())) {
+            throw new RuntimeException("You are not the owner of this quest.");
+        }
+
+        if (quest.getStatus() != QuestStatus.APPROVED) {
+            throw new RuntimeException("You can only complete approved quests. Current status: " + quest.getStatus());
+        }
+
+        quest.setStatus(QuestStatus.COMPLETED);
 
         return questRepository.save(quest);
     }
