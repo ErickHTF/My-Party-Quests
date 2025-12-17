@@ -7,5 +7,6 @@ public record CreatePartyDTO(
         String partyName,
 
         @NotBlank(message = "Description is mandatory")
-        String partyDescription
-) {}
+        String partyDescription)
+{
+}
