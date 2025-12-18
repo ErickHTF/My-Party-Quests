@@ -16,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/parties")
 public class PartyController {
@@ -106,6 +108,22 @@ public class PartyController {
         partyService.deleteParty(id, loggedUser);
         return ResponseEntity.ok("Party successfully deleted.");
     }
+
+
+    @Operation(summary = "Get All Parties",
+            description = "Returns all Parties.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = PartyController.class))}),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping(value = "/all")
+    public List<Party> findAllParties() {
+
+        return partyService.findAllParties();
+    }
+
+
 
     @Operation(summary = "Start Planning Phase", description = "Moves the party from LOBBY to PLANNING. Only the owner can do this.")
     @ApiResponses({

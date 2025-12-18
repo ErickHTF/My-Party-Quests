@@ -1,5 +1,6 @@
 package com.Sprint.Sprint.Controller;
 
+import com.Sprint.Sprint.DTO.Response.UserResponseDTO;
 import com.Sprint.Sprint.Entity.User;
 import com.Sprint.Sprint.Repository.UserRepository;
 import com.Sprint.Sprint.Service.UserService;
@@ -35,6 +36,13 @@ public class UserController {
     public List<User> getAllUsers() {
 
         return userService.findAllUsers();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> getCurrentUser() {
+        UserResponseDTO userDTO = userService.getMe();
+
+        return ResponseEntity.ok(userDTO);
     }
 
     @Operation(summary = "Delete User",

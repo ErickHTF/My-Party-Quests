@@ -17,7 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import javax.swing.text.html.parser.Entity;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/quests")
@@ -103,6 +104,20 @@ public class QuestController {
         Quest completedQuest = questService.completeQuest(id, user);
 
         return ResponseEntity.ok(new QuestResponseDTO(completedQuest));
+    }
+
+
+    @Operation(summary = "Get All Quests",
+            description = "Returns all Quests.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = PartyController.class))}),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping(value = "/all")
+    public List<Quest> findAllQuests() {
+
+        return questService.findAllQuests();
     }
 
 }
