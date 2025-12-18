@@ -113,4 +113,8 @@ public class QuestService {
         return questRepository.save(quest);
     }
 
+    public List<Quest> findAllQuests() {
+        return questRepository.findAll();
+    }
+
 }

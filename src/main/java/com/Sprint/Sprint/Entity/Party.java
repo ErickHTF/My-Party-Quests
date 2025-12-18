@@ -26,12 +26,7 @@ public class Party {
     @Enumerated(EnumType.STRING)
     private PartyStatus partyStatus = PartyStatus.LOBBY; // Standard open
 
-    @ManyToMany
-    @JoinTable(
-            name = "tb_party_members", //
-            joinColumns = @JoinColumn(name = "party_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
+    @OneToMany(mappedBy = "currentParty", fetch = FetchType.EAGER)
     private java.util.List<User> members;
 
     private LocalDateTime currentPhaseExpiration;

@@ -110,6 +110,10 @@ public class PartyService {
 
     }
 
+    public List<Party> findAllParties() {
+        return partyRepository.findAll();
+    }
+
     @Transactional
     public Party startPlanningPhase(Long partyId, User loggedUser) {
         Party party = partyRepository.findById(partyId)

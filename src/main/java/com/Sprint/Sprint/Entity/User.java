@@ -30,7 +30,11 @@ public class User implements UserDetails {
     private String password;
 
     @Column (nullable = false)
+    @Enumerated(EnumType.STRING)
     private UserRole role;
+
+    @Column(nullable = false)
+    private Integer gold = 0; // 0 by default
 
     public UserRole getRole() {
         return role;
@@ -82,6 +86,11 @@ public class User implements UserDetails {
     public void setNickname(String nickname) {
         this.nickname = nickname;
     }
+
+    public Integer getGold() {return gold; }
+
+    public void setGold(Integer gold) {this.gold = gold; }
+
     @Override
     public boolean isAccountNonExpired() {
         return true;
