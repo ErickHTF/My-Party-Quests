@@ -84,6 +84,7 @@ public class PartyService {
 
     }
 
+    @Transactional
     public void deleteParty(Long id, User loggedUser) {
 
         Party party = partyRepository.findById(id)
@@ -179,6 +180,31 @@ public class PartyService {
         }
 
         party.setPartyStatus(PartyStatus.REVIEW);
+
+        // 2. Busca todas as quests desse grupo
+        List<Quest> partyQuests = questRepository.findByPartyId(partyId);
+
+        // 3. Distribui os prêmios (Payout)
+        for (Quest quest : partyQuests) {
+            // Regra: Só paga se estiver APROVADA e se AINDA NÃO FOI PAGA
+            if (quest.getStatus() == QuestStatus.COMPLETED && !quest.isRewardClaimed()) {
+
+                User owner = quest.getAdventurer();
+
+                int currentGold = owner.getGold() != null ? owner.getGold() : 0;
+                int rewardGold = quest.getGoldReward() != null ? quest.getGoldReward() : 0;
+                owner.setGold(currentGold + rewardGold);
+
+                int currentXp = owner.getXp() != null ? owner.getXp() : 0;
+                int rewardXp = quest.getXpReward() != null ? quest.getXpReward() : 0;
+                owner.setXp(currentXp + rewardXp);
+
+                quest.setRewardClaimed(true);
+
+                userRepository.save(owner);
+                questRepository.save(quest);
+            }
+        }
         return partyRepository.save(party);
     }
 
@@ -196,5 +222,7 @@ public class PartyService {
 
         return partyRepository.save(party);
     }
+
+
 
 }

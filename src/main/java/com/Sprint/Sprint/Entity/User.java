@@ -36,6 +36,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Integer gold = 0; // 0 by default
 
+    @Column(nullable = false)
+    private Integer xp = 0; // 0 by default
+
     public UserRole getRole() {
         return role;
     }
@@ -90,6 +93,14 @@ public class User implements UserDetails {
     public Integer getGold() {return gold; }
 
     public void setGold(Integer gold) {this.gold = gold; }
+
+    public Integer getXp() {
+        return xp;
+    }
+
+    public void setXp(Integer xp) {
+        this.xp = xp;
+    }
 
     @Override
     public boolean isAccountNonExpired() {

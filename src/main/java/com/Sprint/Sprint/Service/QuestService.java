@@ -49,12 +49,20 @@ public class QuestService {
         quest.setParty(adventurer.getCurrentParty());
 
         int goldAmount = switch (data.rarity()) {
-            case COMMON -> 100;
-            case RARE -> 200;
-            case EPIC -> 400;
-            case LEGENDARY -> 700;
+            case COMMON -> 5;
+            case RARE -> 10;
+            case EPIC -> 15;
+            case LEGENDARY -> 20;
         };
         quest.setGoldReward(goldAmount);
+
+        int xpAmount = switch (data.rarity()) {
+            case COMMON -> 50;
+            case RARE -> 150;
+            case EPIC -> 500;
+            case LEGENDARY -> 1500;
+        };
+        quest.setXpReward(xpAmount);
 
         List<User> members = userRepository.findByCurrentParty(currentParty);
         Random random = new Random();

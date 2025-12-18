@@ -47,6 +47,10 @@ public class Quest {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    private boolean rewardClaimed = false;
+
+    private Integer xpReward;
+
     public Quest() {}
 
     public long getId() {
@@ -87,6 +91,22 @@ public class Quest {
 
     public void setGoldReward(Integer goldReward) {
         this.goldReward = goldReward;
+    }
+
+    public boolean isRewardClaimed() {
+        return rewardClaimed;
+    }
+
+    public void setRewardClaimed(boolean rewardClaimed) {
+        this.rewardClaimed = rewardClaimed;
+    }
+
+    public Integer getXpReward() {
+        return xpReward;
+    }
+
+    public void setXpReward(Integer xpReward) {
+        this.xpReward = xpReward;
     }
 
     public User getAdventurer() {

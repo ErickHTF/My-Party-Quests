@@ -216,26 +216,28 @@
 
             <div x-show="currentView === 'tavern'" class="space-y-6">
 
-                <div class="pixel-card p-4">
-                    <h3 class="text-sm mb-4 text-rpg-goldLight">🎮 Adventurer Status</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                <div class="pixel-card p-4 mb-6">
+                    <div class="flex justify-between items-end mb-2">
                         <div>
-                            <span class="text-rpg-gray">Name:</span>
-                            <p class="text-rpg-goldLight" x-text="user.nickname || user.username"></p>
+                            <h3 class="text-sm text-rpg-goldLight mb-1">
+                                <span x-text="user.nickname || user.username"></span>
+                                <span class="text-[8px] text-rpg-gray" x-text="'(Lvl ' + userLevel + ')'"></span>
+                            </h3>
+                            <div class="flex gap-4 text-[10px]">
+                                <span class="text-yellow-400">💰 <span x-text="user.gold || 0"></span> G</span>
+                                <span class="text-rpg-blue" x-show="pendingRewards > 0" x-transition>
+                                    (+<span x-text="pendingRewards"></span> G Pending)
+                                </span>
+                            </div>
                         </div>
-                        <div>
-                            <span class="text-rpg-gray">Gold:</span>
-                            <p class="text-yellow-400" x-text="'💰 ' + (user.gold || 0)"></p>
+                        <div class="text-[8px] text-rpg-gray">
+                            <span x-text="user.xp || 0"></span> / <span x-text="nextLevelXp"></span> XP
                         </div>
-                        <div>
-                            <span class="text-rpg-gray">Party:</span>
-                            <p :class="myParty ? 'text-rpg-green' : 'text-rpg-gray'"
-                               x-text="myParty ? (myParty.partyName || myParty.name) : 'None'"></p>
-                        </div>
-                        <div x-show="myParty">
-                            <span class="text-rpg-gray">Status:</span>
-                            <p class="text-rpg-blue" x-text="myParty?.status || myParty?.partyStatus || '-'"></p>
-                        </div>
+                    </div>
+
+                    <div class="w-full h-3 bg-rpg-darker border-2 border-rpg-border relative">
+                        <div class="h-full bg-rpg-purple transition-all duration-1000"
+                             :style="'width: ' + xpPercentage + '%'"></div>
                     </div>
                 </div>
 
@@ -292,7 +294,11 @@
                                     <button @click="disbandParty()" class="pixel-btn bg-rpg-red text-white px-3 py-2 text-xs">💀 DISBAND</button>
                                 </div>
                             </template>
-                            <button x-show="!isPartyOwner" @click="leaveParty()" class="pixel-btn bg-rpg-red text-white px-3 py-2 text-xs">🚪 LEAVE</button>
+                            <button x-show="!isPartyOwner && (myParty.status === 'LOBBY' || myParty.partyStatus === 'LOBBY')"
+                                    @click="leaveParty()"
+                                    class="pixel-btn bg-rpg-red text-white px-3 py-2 text-xs">
+                                🚪 LEAVE
+                            </button>
                         </div>
                     </div>
                 </template>
@@ -525,8 +531,8 @@
                             <thead>
                             <tr class="text-rpg-goldLight border-b-4 border-rpg-border">
                                 <th class="p-2">ADVENTURER</th>
+                                <th class="p-2">LEVEL</th>
                                 <th class="p-2">WEALTH</th>
-                                <th class="p-2">ACTIONS</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -536,11 +542,17 @@
                                         <div class="flex flex-col">
                                             <span class="text-rpg-goldLight" x-text="u.nickname"></span>
                                             <span class="text-[10px] text-rpg-gray" x-text="'@' + u.username"></span>
+
+                                            <span class="text-[9px] mt-1 px-1 py-0.5 w-fit border border-rpg-gray"
+                                                  :class="u.partyName === 'Freelancer' || !u.partyName ? 'text-rpg-gray border-dashed' : 'text-rpg-blue bg-rpg-darker border-solid'"
+                                                  x-text="u.partyName || 'Freelancer'"></span>
                                         </div>
                                     </td>
-                                    <td class="p-2 text-yellow-400" x-text="'💰 ' + (u.gold || 0)"></td>
                                     <td class="p-2">
+                                        <span class="text-rpg-purple font-bold" x-text="'Lvl ' + (u.level || 1)"></span>
+                                        <span class="text-[8px] text-rpg-gray block" x-text="(u.xp || 0) + ' XP'"></span>
                                     </td>
+                                    <td class="p-2 text-yellow-400" x-text="'💰 ' + (u.gold || 0)"></td>
                                 </tr>
                             </template>
                             </tbody>

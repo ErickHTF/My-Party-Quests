@@ -11,7 +11,7 @@ import java.util.List;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>{
 
-    UserDetails findByUsername(String username);
+    User findByUsername(String username);
 
     List<User> findByCurrentParty(Party party);
 

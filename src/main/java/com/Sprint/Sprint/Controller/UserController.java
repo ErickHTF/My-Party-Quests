@@ -3,6 +3,7 @@ package com.Sprint.Sprint.Controller;
 import com.Sprint.Sprint.DTO.Response.UserResponseDTO;
 import com.Sprint.Sprint.Entity.User;
 import com.Sprint.Sprint.Repository.UserRepository;
+import com.Sprint.Sprint.Service.LevelProgressionService;
 import com.Sprint.Sprint.Service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,9 +21,6 @@ import java.util.List;
 public class UserController {
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private UserService userService;
 
     @Operation(summary = "Get All Users",
@@ -33,9 +31,9 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping(value = "/all")
-    public List<User> getAllUsers() {
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
 
-        return userService.findAllUsers();
+        return ResponseEntity.ok(userService.findAllUsers());
     }
 
     @GetMapping("/me")
