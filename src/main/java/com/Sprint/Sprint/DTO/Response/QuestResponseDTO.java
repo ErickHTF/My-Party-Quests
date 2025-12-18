@@ -12,8 +12,8 @@ public record QuestResponseDTO(
         Integer goldReward,
         QuestStatus status,
         String adventurerName,
-        String reviewerName,    // Quem revisa
-        String reviewerFeedback // O feedback que ele deu
+        String reviewerName,
+        String reviewerFeedback
 ) {
     public QuestResponseDTO(Quest quest) {
         this(

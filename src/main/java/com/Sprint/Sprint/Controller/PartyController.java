@@ -152,4 +152,20 @@ public class PartyController {
         Party party = partyService.startExecutionPhase(id, user);
         return ResponseEntity.ok(new PartyResponseDTO(party));
     }
+
+    @Operation(summary = "Start Review Phase",
+            description = "Ends the execution and moves the party to Review status to see results.")
+    @PostMapping("/{id}/start-review")
+    public ResponseEntity<PartyResponseDTO> startReview(@PathVariable Long id,
+                                                        @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(new PartyResponseDTO(partyService.startReviewPhase(id, user)));
+    }
+
+    @Operation(summary = "Reset to Lobby",
+            description = "Clears all quests and returns the party to the Lobby for a new Sprint.")
+    @PostMapping("/{id}/reset-lobby")
+    public ResponseEntity<PartyResponseDTO> resetLobby(@PathVariable Long id,
+                                                       @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(new PartyResponseDTO(partyService.resetToLobby(id, user)));
+    }
 }

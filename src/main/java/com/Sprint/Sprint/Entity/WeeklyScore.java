@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 
-@Entity(name ="tb_weekly_socres ")
+@Entity(name ="tb_weekly_scores ")
 public class WeeklyScore {
 
     @Id
@@ -12,7 +12,6 @@ public class WeeklyScore {
     @Column(name = "id")
     private Long id;
 
-    // Data do fechamento da semana
     private LocalDate weekEndDate;
 
     @ManyToOne

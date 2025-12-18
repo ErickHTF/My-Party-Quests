@@ -5,9 +5,11 @@ function questParty() {
         // State
         user: null,
         token: null,
-        loading: false,
-        showParties: true,
+        loading: false, // Loading visual apenas para ações manuais
+        showParties: false,
         toasts: [],
+        myQuestsList: [],
+        reviewQuestsList: [],
 
         // Views
         currentView: 'tavern',
@@ -33,35 +35,47 @@ function questParty() {
         parties: [],
         quests: [],
         users: [],
-        myParty: null,
 
         // Computed
         get isPartyOwner() {
             if (!this.myParty || !this.user) return false;
-
-            // CORREÇÃO: Verifica dentro do objeto 'owner' ou 'ownerId' direto
             const ownerId = this.myParty.owner ? this.myParty.owner.id : this.myParty.ownerId;
             return ownerId === this.user.id;
         },
 
-        // Initialize
+        get myParty() {
+            if (!this.user || !this.parties.length) return null;
+            return this.parties.find(p =>
+                (p.owner && p.owner.id === this.user.id) ||
+                (p.members && p.members.some(m => m.id === this.user.id))
+            );
+        },
+
+        // --- INICIALIZAÇÃO E AUTO-UPDATE ---
         init() {
-            // Tenta ler com o prefixo novo 'quest_'
             const savedToken = localStorage.getItem('quest_token');
-            const savedUser = localStorage.getItem('quest_user');
-
-            if (savedToken && savedUser) {
-                // Se achou, carrega para a memória
-                this.token = savedToken;
-                this.user = JSON.parse(savedUser);
-
-                // Define o header padrão para as próximas chamadas
-                // (Isso é crucial! Sem isso, o loadData falha e desloga você)
-                this.loadData().catch(err => {
-                    console.error("Sessão expirada ou erro ao carregar:", err);
-                    this.logout(); // Se der erro ao carregar, limpa tudo
-                });
+            try {
+                const savedUser = JSON.parse(localStorage.getItem('quest_user'));
+                if (savedToken && savedUser) {
+                    this.token = savedToken;
+                    this.user = savedUser;
+                    this.showParties = false;
+                    this.loadData();
+                } else {
+                    this.showParties = true;
+                }
+            } catch (e) {
+                this.logout();
             }
+
+            // --- AQUI ESTÁ A MÁGICA (POLLING) ---
+            // A cada 2 segundos, recarrega os dados se estiver logado
+            setInterval(() => {
+                if (this.token && this.user) {
+                    // Chamamos loadData em "silêncio" (sem ativar this.loading)
+                    this.loadData();
+                }
+            }, 2000);
         },
 
         // Toast
@@ -92,9 +106,15 @@ function questParty() {
                 }
 
                 const text = await res.text();
-                return text ? JSON.parse(text) : null;
+                if (!text) return null;
+
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    return text;
+                }
             } catch (err) {
-                console.error('API Error:', err);
+                // console.error('API Error:', err); // Comentei para não poluir o console no loop
                 throw err;
             }
         },
@@ -125,58 +145,53 @@ function questParty() {
         logout() {
             this.user = null;
             this.token = null;
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
+            localStorage.removeItem('quest_token');
+            localStorage.removeItem('quest_user');
             this.showToast('Farewell, adventurer!', 'info');
         },
 
         // Load Data
         async loadData() {
+            // Note que não setamos this.loading = true aqui
+            // para não ficar piscando a tela a cada 2 segundos
             await Promise.all([
                 this.loadParties(),
-                this.loadQuests(),
                 this.loadUsers(),
+                this.loadMySpecificQuests(),
+                this.loadReviewQuests(),
+                this.loadMe()
             ]);
         },
 
+        async loadReviewQuests() {
+            try { this.reviewQuestsList = await this.api('/quests/to-review'); } catch (e) { }
+        },
+
+        async loadMySpecificQuests() {
+            try { this.myQuestsList = await this.api('/quests/my-quests'); } catch (e) { }
+        },
+
         async loadParties() {
-            try {
-                this.parties = await this.api('/parties/all');
-            } catch (err) {
-                console.error('Failed to load parties:', err);
-                this.parties = [];
-            }
+            try { this.parties = await this.api('/parties/all'); } catch (e) { }
         },
 
         async loadQuests() {
-            try {
-                this.quests = await this.api('/quests/all');
-            } catch (err) {
-                console.error('Failed to load quests:', err);
-                this.quests = [];
-            }
+            try { this.quests = await this.api('/quests/all'); } catch (e) { }
         },
 
         async loadUsers() {
-            try {
-                this.users = await this.api('/user/all');
-            } catch (err) {
-                console.error('Failed to load users:', err);
-                this.users = [];
-            }
+            try { this.users = await this.api('/user/all'); } catch (e) { }
         },
 
-        async loadMyParty() {
+        async loadMe() {
             try {
-                // Try to find user's party from the parties list
-                const userParty = this.parties.find(p =>
-                    p.members?.some(m => m.id === this.user?.id)
-                );
-                this.myParty = userParty || null;
-            } catch (err) {
-                console.error('Failed to load my party:', err);
-                this.myParty = null;
-            }
+                const me = await this.api('/user/me');
+                // Só atualiza se mudou algo crítico para evitar re-render desnecessário
+                if (JSON.stringify(this.user) !== JSON.stringify(me)) {
+                    this.user = me;
+                    localStorage.setItem('quest_user', JSON.stringify(this.user));
+                }
+            } catch (e) { }
         },
 
         // Party Actions
@@ -184,8 +199,6 @@ function questParty() {
             try {
                 await this.api('/parties', {
                     method: 'POST',
-                    // AQUI ESTÁ A CORREÇÃO:
-                    // Mapeamos 'name' -> 'partyName' e 'description' -> 'partyDescription'
                     body: JSON.stringify({
                         partyName: this.partyForm.name,
                         partyDescription: this.partyForm.description
@@ -196,9 +209,7 @@ function questParty() {
                 this.showCreateParty = false;
                 this.partyForm = { name: '', description: '' };
                 await this.loadParties();
-
-                // Opcional: Já carrega a party nova como "minha party" se o backend já te colocar nela
-                // await this.loadMyParty(); // (Isso agora é automático pelo computed, então só carregar parties basta)
+                await this.loadMe();
 
             } catch (err) {
                 this.showToast('Failed to create party: ' + err.message, 'error');
@@ -207,29 +218,40 @@ function questParty() {
 
         async joinParty(id) {
             try {
-                this.loading = true; // Mostra loading
+                this.loading = true;
                 await this.api(`/parties/join/${id}`, { method: 'POST' });
-
-                alert('Joined successfully! Reloading...'); // Alerta simples (opcional)
-
-                // FORÇA O RECARREGAMENTO DA PÁGINA
-                // Isso resolve qualquer problema de cache ou atraso de atualização
-                window.location.reload();
-
+                await this.loadMe();
+                await this.loadParties();
+                this.showParties = false;
+                this.showToast('Joined successfully! Welcome to the party.', 'success');
             } catch (err) {
                 this.showToast('Failed to join party: ' + err.message, 'error');
+            } finally {
                 this.loading = false;
             }
         },
 
         async leaveParty() {
             try {
+                this.loading = true;
                 await this.api('/parties/leave', { method: 'POST' });
-                this.showToast('Left the party.', 'info');
+
+                if (this.user) {
+                    this.user.currentParty = null;
+                    localStorage.setItem('quest_user', JSON.stringify(this.user));
+                }
+
+                if (this.currentView === 'quests') {
+                    this.currentView = 'tavern';
+                }
+
                 await this.loadParties();
-                this.myParty = null;
+                this.showParties = true;
+                this.showToast('Left the party.', 'info');
             } catch (err) {
-                this.showToast('Failed to leave party: ' + err.message, 'error');
+                this.showToast('Error leaving party: ' + err.message, 'error');
+            } finally {
+                this.loading = false;
             }
         },
 
@@ -238,7 +260,6 @@ function questParty() {
                 await this.api(`/parties/${this.myParty.id}/start-planning`, { method: 'POST' });
                 this.showToast('Planning phase started!', 'success');
                 await this.loadParties();
-                await this.loadMyParty();
             } catch (err) {
                 this.showToast('Failed to start planning: ' + err.message, 'error');
             }
@@ -249,18 +270,19 @@ function questParty() {
                 await this.api(`/parties/${this.myParty.id}/start-execution`, { method: 'POST' });
                 this.showToast('Adventure started! Good luck!', 'success');
                 await this.loadParties();
-                await this.loadMyParty();
             } catch (err) {
                 this.showToast('Failed to start adventure: ' + err.message, 'error');
             }
         },
 
         async disbandParty() {
-            if (!confirm('Are you sure you want to disband the party?')) return;
             try {
                 await this.api(`/parties/${this.myParty.id}`, { method: 'DELETE' });
+                if (this.user) {
+                    this.user.currentParty = null;
+                    localStorage.setItem('quest_user', JSON.stringify(this.user));
+                }
                 this.showToast('Party disbanded.', 'info');
-                this.myParty = null;
                 await this.loadParties();
             } catch (err) {
                 this.showToast('Failed to disband party: ' + err.message, 'error');
@@ -270,7 +292,6 @@ function questParty() {
         // Quest Actions
         async createQuest() {
             try {
-                // Aqui usamos o 'currentReward' que calculamos
                 const goldAmount = this.currentReward;
 
                 await this.api('/quests', {
@@ -279,16 +300,15 @@ function questParty() {
                         title: this.questForm.title,
                         description: this.questForm.description,
                         rarity: this.questForm.rarity,
-                        goldReward: goldAmount // Envia o valor certo pro banco
+                        goldReward: goldAmount
                     })
                 });
 
                 this.showToast(`Quest posted! Reward: ${goldAmount} Gold`, 'success');
-
-                // Limpa o formulário
                 this.questForm = { title: '', description: '', rarity: 'COMMON', gold: 0 };
 
-                await this.loadQuests();
+                await this.loadMySpecificQuests();
+                await this.loadReviewQuests();
             } catch (err) {
                 this.showToast('Failed to create quest: ' + err.message, 'error');
             }
@@ -301,7 +321,9 @@ function questParty() {
                     body: JSON.stringify({ approved, feedback: approved ? 'Approved' : 'Rejected' })
                 });
                 this.showToast(approved ? 'Quest approved!' : 'Quest rejected.', approved ? 'success' : 'info');
-                await this.loadQuests();
+
+                await this.loadReviewQuests();
+                await this.loadMySpecificQuests();
             } catch (err) {
                 this.showToast('Failed to review quest: ' + err.message, 'error');
             }
@@ -311,60 +333,29 @@ function questParty() {
             try {
                 await this.api(`/quests/${id}/complete`, { method: 'POST' });
                 this.showToast('Quest completed! Rewards claimed!', 'success');
-                await this.loadQuests();
+
+                await this.loadMySpecificQuests();
             } catch (err) {
                 this.showToast('Failed to complete quest: ' + err.message, 'error');
             }
         },
 
-        // 1. Crie esta função nova para buscar SÓ os seus dados
-        async loadMe() {
-            try {
-                // Chama o endpoint novo que criamos no Java
-                const me = await this.api('/user/me');
-
-                // Atualiza os dados na memória e no navegador
-                this.user = me;
-                localStorage.setItem('quest_user', JSON.stringify(this.user));
-
-            } catch (e) {
-                console.error("Erro ao carregar perfil", e);
-            }
-        },
-
-        get myParty() {
-            // Se não tem user ou a lista ainda não carregou, retorna null
-            if (!this.user || !this.parties.length) return null;
-
-            return this.parties.find(p =>
-                // Verifica se sou o Dono (pelo objeto owner)
-                (p.owner && p.owner.id === this.user.id) ||
-                // Ou se sou Membro
-                (p.members && p.members.some(m => m.id === this.user.id))
-            );
-        },
-
-// 2. Atualize o login para chamar o loadMe()
         async login() {
             this.loading = true;
             try {
-                // 1. Faz o login e pega o token
                 const data = await this.api('/auth/login', {
                     method: 'POST',
                     body: JSON.stringify(this.authForm)
                 });
 
-                // 2. Salva APENAS o token agora
                 this.token = data.token || data;
                 localStorage.setItem('quest_token', this.token);
 
-                // 3. Carrega os dados do usuário (O loadMe já salva o 'quest_user' sozinho)
                 await this.loadMe();
-
                 this.showToast(`Welcome back, ${this.user.nickname}!`, 'success');
+                this.authMode = 'login';
                 this.authForm = { username: '', password: '', nickname: '' };
 
-                // 4. Carrega o resto do jogo
                 this.loadData();
             } catch (err) {
                 console.error(err);
@@ -374,5 +365,34 @@ function questParty() {
             }
         },
 
+        async startReviewPhase() {
+            try {
+                this.loading = true;
+                await this.api(`/parties/${this.myParty.id}/start-review`, { method: 'POST' });
+                this.showToast('Missão Cumprida! Iniciando a fase de Revisão.', 'success');
+                await this.loadParties();
+            } catch (err) {
+                this.showToast('Erro ao iniciar revisão: ' + err.message, 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async resetLobby() {
+            try {
+                this.loading = true;
+                await this.api(`/parties/${this.myParty.id}/reset-lobby`, { method: 'POST' });
+
+                await this.loadParties();
+                await this.loadMySpecificQuests();
+                await this.loadReviewQuests();
+
+                this.showToast('Guilda resetada! Prontos para a próxima sprint.', 'success');
+            } catch (err) {
+                this.showToast('Erro ao resetar: ' + err.message, 'error');
+            } finally {
+                this.loading = false;
+            }
+        }
     };
 }

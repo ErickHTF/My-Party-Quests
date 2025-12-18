@@ -120,4 +120,40 @@ public class QuestController {
         return questService.findAllQuests();
     }
 
+    @Operation(summary = "Get My Quests",
+            description = "Returns all quests created by the authenticated user in their current party.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of user's quests returned successfully",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = QuestResponseDTO.class))}),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping("/my-quests")
+    public ResponseEntity<List<QuestResponseDTO>> getMyQuests(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(questService.getMyQuests(user));
+    }
+
+
+    @Operation(summary = "Get Quests to Review",
+            description = "Returns all quests where the authenticated user is the assigned reviewer and the status is PENDING_APPROVAL.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of quests to review returned successfully",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = QuestResponseDTO.class))}),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping("/to-review")
+    public ResponseEntity<List<QuestResponseDTO>> getQuestsToReview(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(questService.getQuestsToReview(user));
+    }
+
+    @Operation(summary = "Update Quest", description = "Allows the user to fix a quest after a rejection.")
+    @PutMapping("/{id}")
+    public ResponseEntity<QuestResponseDTO> updateQuest(
+            @PathVariable Long id,
+            @RequestBody @Valid CreateQuestDTO data,
+            @AuthenticationPrincipal User user) {
+
+        return ResponseEntity.ok(new QuestResponseDTO(questService.updateQuest(id, data, user)));
+    }
 }

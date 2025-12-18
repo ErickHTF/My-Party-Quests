@@ -74,6 +74,10 @@ public class PartyService {
             throw new RuntimeException("The owner cannot leave their own party. Delete the party or transfer its leadership.");
         }
 
+        if (currentParty.getPartyStatus() != PartyStatus.LOBBY) {
+            throw new IllegalStateException("Please wait for the return to the LOBBY phase. (Current Phase: " + currentParty.getPartyStatus() + ")");
+        }
+
         loggedUser.setCurrentParty(null);
 
         userRepository.save(loggedUser);
@@ -90,7 +94,6 @@ public class PartyService {
         }
 
         List<User> members = userRepository.findAll()
-                //transforma lista
                 .stream()
                 .filter(u ->
                         //ignore users with no party
@@ -162,6 +165,34 @@ public class PartyService {
 
         party.setPartyStatus(PartyStatus.EXECUTION);
         party.setCurrentPhaseExpiration(LocalDateTime.now().plusDays(5));
+
+        return partyRepository.save(party);
+    }
+
+    @Transactional
+    public Party startReviewPhase(Long partyId, User loggedUser) {
+        Party party = partyRepository.findById(partyId)
+                .orElseThrow(() -> new RuntimeException("Party not found."));
+
+        if (!party.getOwner().getId().equals(loggedUser.getId())) {
+            throw new RuntimeException("Only the owner can finish the execution!");
+        }
+
+        party.setPartyStatus(PartyStatus.REVIEW);
+        return partyRepository.save(party);
+    }
+
+    @Transactional
+    public Party resetToLobby(Long partyId, User loggedUser) {
+        Party party = partyRepository.findById(partyId)
+                .orElseThrow(() -> new RuntimeException("Party not found."));
+
+        if (!party.getOwner().getId().equals(loggedUser.getId())) {
+            throw new RuntimeException("Only the owner can reset the party!");
+        }
+
+        party.setPartyStatus(PartyStatus.LOBBY);
+        questRepository.deleteByParty(party);
 
         return partyRepository.save(party);
     }

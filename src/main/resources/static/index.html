@@ -17,8 +17,8 @@
                 extend: {
                     colors: {
                         rpg: {
-                            dark: '#1a1410',
-                            darker: '#0f0d0a',
+                            dark: '#1a1410',   /* Tom Médio (Cards) */
+                            darker: '#0f0d0a', /* Tom Profundo (Fundo) */
                             gold: '#d4a84b',
                             goldLight: '#f0d78c',
                             red: '#c73e3e',
@@ -38,26 +38,73 @@
     </script>
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
     <link rel="stylesheet" href="styles.css">
+    <style>
+        [x-cloak] { display: none !important; }
+
+        /* Estilos Pixel Art */
+        .pixel-card {
+            border: 4px solid #5c4d3d;
+            background-color: #1a1410; /* Mudado para rpg-dark para contraste */
+            box-shadow: 4px 4px 0px #000;
+        }
+
+        .pixel-border {
+            border: 4px solid #5c4d3d;
+            box-shadow: 3px 3px 0px #000;
+        }
+
+        .pixel-btn {
+            border: 4px solid #5c4d3d;
+            box-shadow: 3px 3px 0px #000;
+            transition: all 0.1s;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .pixel-btn:active:not(:disabled) {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000;
+        }
+
+        .pixel-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        /* Inputs agora são mais escuros para parecerem 'buracos' no card */
+        .pixel-input {
+            border: 4px solid #5c4d3d;
+            background-color: #0f0d0a; /* rpg-darker */
+            color: #f0d78c;
+        }
+
+        .blink { animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #0f0d0a; }
+        ::-webkit-scrollbar-thumb { background: #5c4d3d; border: 2px solid #0f0d0a; }
+    </style>
 </head>
 
-<body class="min-h-screen text-rpg-gold font-pixel" x-data="questParty()">
+<body class="min-h-screen text-rpg-gold font-pixel bg-rpg-darker" x-data="questParty()" x-init="init()">
 
 <div class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none">
     <template x-for="toast in toasts" :key="toast.id">
-        <div class="toast pixel-border p-4 max-w-xs pointer-events-auto shadow-lg"
+        <div class="toast pixel-border p-4 max-w-xs pointer-events-auto shadow-lg bg-rpg-dark"
              :class="{
-             'bg-rpg-green text-white': toast.type === 'success',
-             'bg-rpg-red text-white': toast.type === 'error',
-             'bg-rpg-blue text-white': toast.type === 'info'
+             'border-rpg-green text-rpg-green': toast.type === 'success',
+             'border-rpg-red text-rpg-red': toast.type === 'error',
+             'border-rpg-blue text-rpg-blue': toast.type === 'info'
            }">
             <p class="text-xs" x-text="toast.message"></p>
         </div>
     </template>
 </div>
 
-<header class="pixel-border bg-rpg-darker p-4 m-4">
+<header class="pixel-card p-4 m-4">
     <div class="container mx-auto flex flex-wrap justify-between items-center gap-4">
         <h1 class="text-lg md:text-2xl text-rpg-goldLight flex items-center gap-2">
             <span>⚔️</span> My Party Quests <span>🛡️</span>
@@ -79,7 +126,7 @@
 
     <template x-if="!user">
         <div class="max-w-md mx-auto mt-10">
-            <div class="pixel-card bg-rpg-darker p-6">
+            <div class="pixel-card p-6">
                 <h2 class="text-center text-lg mb-6 text-rpg-goldLight">
                     <span x-show="authMode === 'login'">🏰 Enter the Tavern</span>
                     <span x-show="authMode === 'register'">📜 Join the Guild</span>
@@ -102,12 +149,12 @@
                     <div>
                         <label class="block text-xs mb-2">Username</label>
                         <input type="text" x-model="authForm.username" required
-                               class="pixel-input w-full bg-rpg-dark text-rpg-gold p-3 text-xs focus:outline-none">
+                               class="pixel-input w-full p-3 text-xs focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-xs mb-2">Password</label>
                         <input type="password" x-model="authForm.password" required
-                               class="pixel-input w-full bg-rpg-dark text-rpg-gold p-3 text-xs focus:outline-none">
+                               class="pixel-input w-full p-3 text-xs focus:outline-none">
                     </div>
                     <button type="submit" class="pixel-btn w-full bg-rpg-gold text-rpg-dark py-3 text-xs"
                             :disabled="loading">
@@ -120,17 +167,17 @@
                     <div>
                         <label class="block text-xs mb-2">Username</label>
                         <input type="text" x-model="authForm.username" required
-                               class="pixel-input w-full bg-rpg-dark text-rpg-gold p-3 text-xs focus:outline-none">
+                               class="pixel-input w-full p-3 text-xs focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-xs mb-2">Nickname</label>
                         <input type="text" x-model="authForm.nickname" required
-                               class="pixel-input w-full bg-rpg-dark text-rpg-gold p-3 text-xs focus:outline-none">
+                               class="pixel-input w-full p-3 text-xs focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-xs mb-2">Password</label>
                         <input type="password" x-model="authForm.password" required
-                               class="pixel-input w-full bg-rpg-dark text-rpg-gold p-3 text-xs focus:outline-none">
+                               class="pixel-input w-full p-3 text-xs focus:outline-none">
                     </div>
                     <button type="submit" class="pixel-btn w-full bg-rpg-green text-white py-3 text-xs"
                             :disabled="loading">
@@ -143,7 +190,7 @@
     </template>
 
     <template x-if="user">
-        <div>
+        <div x-cloak>
             <nav class="flex flex-wrap gap-2 mb-6 justify-center md:justify-start">
                 <button @click="currentView = 'tavern'"
                         class="pixel-btn px-4 py-2 text-xs"
@@ -152,8 +199,13 @@
                 </button>
                 <button @click="currentView = 'quests'"
                         class="pixel-btn px-4 py-2 text-xs"
-                        :class="currentView === 'quests' ? 'bg-rpg-gold text-rpg-dark' : 'bg-rpg-gray'">
-                    📋 QUESTS
+                        :disabled="!myParty"
+                        :class="{
+                            'bg-rpg-gold text-rpg-dark': currentView === 'quests',
+                            'bg-rpg-gray': currentView !== 'quests',
+                            'opacity-50 cursor-not-allowed grayscale': !myParty
+                        }">
+                    📋 QUESTS <span x-show="!myParty">🔒</span>
                 </button>
                 <button @click="currentView = 'users'"
                         class="pixel-btn px-4 py-2 text-xs"
@@ -164,7 +216,7 @@
 
             <div x-show="currentView === 'tavern'" class="space-y-6">
 
-                <div class="pixel-card bg-rpg-darker p-4">
+                <div class="pixel-card p-4">
                     <h3 class="text-sm mb-4 text-rpg-goldLight">🎮 Adventurer Status</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                         <div>
@@ -188,7 +240,7 @@
                 </div>
 
                 <template x-if="myParty">
-                    <div class="pixel-card bg-rpg-darker p-4 border-l-4 border-rpg-green">
+                    <div class="pixel-card p-4 border-l-4 border-rpg-green">
                         <h3 class="text-sm mb-2 text-rpg-green">
                             <span x-text="myParty.partyName || myParty.name"></span>
                         </h3>
@@ -205,7 +257,7 @@
                             <h4 class="text-[10px] text-rpg-gray mb-2">ADVENTURERS</h4>
                             <div class="flex flex-wrap gap-2">
                                 <template x-if="myParty.owner">
-                                    <span class="pixel-border bg-rpg-dark px-2 py-1 text-xs flex items-center gap-1 border-rpg-gold text-rpg-gold">
+                                    <span class="pixel-border bg-rpg-darker px-2 py-1 text-xs flex items-center gap-1 border-rpg-gold text-rpg-gold">
                                         <span>👑</span>
                                         <span x-text="myParty.owner.nickname || myParty.owner.username"></span>
                                     </span>
@@ -214,7 +266,7 @@
                                 <template x-if="myParty.members && myParty.members.length > 0">
                                     <template x-for="m in myParty.members" :key="m.id">
                                         <span x-show="!myParty.owner || m.id !== myParty.owner.id"
-                                              class="pixel-border bg-rpg-dark px-2 py-1 text-xs flex items-center gap-1 text-rpg-gray">
+                                              class="pixel-border bg-rpg-darker px-2 py-1 text-xs flex items-center gap-1 text-rpg-gray">
                                             <span x-text="m.nickname || m.username"></span>
                                         </span>
                                     </template>
@@ -227,8 +279,16 @@
                                 <div class="flex gap-2">
                                     <button x-show="['LOBBY', null, undefined].includes(myParty.status || myParty.partyStatus)"
                                             @click="startPlanning()" class="pixel-btn bg-rpg-blue text-white px-3 py-2 text-xs">📝 PLANNING</button>
+
                                     <button x-show="(myParty.status || myParty.partyStatus) === 'PLANNING'"
                                             @click="startExecution()" class="pixel-btn bg-rpg-green text-white px-3 py-2 text-xs">⚔️ ADVENTURE</button>
+
+                                    <button x-show="(myParty.status || myParty.partyStatus) === 'EXECUTION'"
+                                            @click="startReviewPhase()" class="pixel-btn bg-rpg-purple text-white px-3 py-2 text-xs">🏁 FINISH QUESTS</button>
+
+                                    <button x-show="(myParty.status || myParty.partyStatus) === 'REVIEW'"
+                                            @click="resetLobby()" class="pixel-btn bg-rpg-gold text-rpg-dark px-3 py-2 text-xs">🔄 NEW SPRINT</button>
+
                                     <button @click="disbandParty()" class="pixel-btn bg-rpg-red text-white px-3 py-2 text-xs">💀 DISBAND</button>
                                 </div>
                             </template>
@@ -237,16 +297,16 @@
                     </div>
                 </template>
 
-                <div class="pixel-card bg-rpg-darker p-4">
+                <div class="pixel-card p-4">
 
                     <div class="flex flex-wrap justify-between items-center gap-4 cursor-pointer select-none"
                          @click="showParties = !showParties">
 
                         <div class="flex items-center gap-2">
-            <span class="text-xs transition-transform duration-200 text-rpg-gold"
-                  :class="showParties ? 'rotate-90' : 'rotate-0'">
-                ▶
-            </span>
+                            <span class="text-xs transition-transform duration-200 text-rpg-gold"
+                                  :class="showParties ? 'rotate-90' : 'rotate-0'">
+                                ▶
+                            </span>
                             <h3 class="text-sm text-rpg-goldLight hover:text-white transition-colors">
                                 🍻 Available Parties
                             </h3>
@@ -264,7 +324,7 @@
                          class="mt-4 pt-4 border-t border-rpg-border grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
                         <template x-for="party in parties" :key="party.id">
-                            <div class="pixel-border bg-rpg-dark p-4 h-full flex flex-col justify-between">
+                            <div class="pixel-border bg-rpg-darker p-4 h-full flex flex-col justify-between hover:border-rpg-gold transition-colors">
                                 <div>
                                     <h4 class="text-xs text-rpg-goldLight mb-2" x-text="party.partyName || party.name"></h4>
                                     <p class="text-xs text-rpg-gray mb-2 line-clamp-2" x-text="party.partyDescription || party.description"></p>
@@ -292,18 +352,18 @@
                 <div x-show="showCreateParty"
                      class="fixed inset-0 bg-black/80 flex items-center justify-center z-40 p-4"
                      @click.self="showCreateParty = false">
-                    <div class="pixel-card bg-rpg-darker p-6 w-full max-w-md">
+                    <div class="pixel-card p-6 w-full max-w-md">
                         <h3 class="text-sm mb-4 text-rpg-goldLight">🏕️ Create New Party</h3>
                         <form @submit.prevent="createParty()" class="space-y-4">
                             <div>
                                 <label class="block text-xs mb-2">Party Name</label>
                                 <input type="text" x-model="partyForm.name" required
-                                       class="pixel-input w-full bg-rpg-dark text-rpg-gold p-3 text-xs focus:outline-none">
+                                       class="pixel-input w-full p-3 text-xs focus:outline-none">
                             </div>
                             <div>
                                 <label class="block text-xs mb-2">Description</label>
                                 <textarea x-model="partyForm.description" rows="3"
-                                          class="pixel-input w-full bg-rpg-dark text-rpg-gold p-3 text-xs focus:outline-none resize-none"></textarea>
+                                          class="pixel-input w-full p-3 text-xs focus:outline-none resize-none"></textarea>
                             </div>
                             <div class="flex gap-2">
                                 <button type="submit" class="pixel-btn flex-1 bg-rpg-gold text-rpg-dark py-2 text-xs">
@@ -319,15 +379,16 @@
                 </div>
             </div>
 
-            <div x-show="currentView === 'quests'" class="space-y-6">
-                <div class="pixel-card bg-rpg-darker p-4">
+            <div x-show="currentView === 'quests' && myParty" class="space-y-6">
+
+                <div class="pixel-card p-4" x-show="(myParty.status || myParty.partyStatus) === 'PLANNING'">
                     <h3 class="text-sm mb-4 text-rpg-goldLight">📜 Post New Quest</h3>
                     <form @submit.prevent="createQuest()" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs mb-2">Quest Title</label>
                                 <input type="text" x-model="questForm.title" required
-                                       class="pixel-input w-full bg-rpg-dark text-rpg-gold p-3 text-xs focus:outline-none">
+                                       class="pixel-input w-full p-3 text-xs focus:outline-none">
                             </div>
                             <div>
                                 <label class="block text-xs mb-2">
@@ -336,7 +397,7 @@
                                 </label>
 
                                 <select x-model="questForm.rarity"
-                                        class="pixel-input bg-rpg-dark text-rpg-gold p-3 text-xs focus:outline-none w-full">
+                                        class="pixel-input p-3 text-xs focus:outline-none w-full">
                                     <option value="COMMON">⚪ COMMON</option>
                                     <option value="RARE">🔵 RARE</option>
                                     <option value="EPIC">🟣 EPIC</option>
@@ -347,10 +408,9 @@
                         <div>
                             <label class="block text-xs mb-2">Description</label>
                             <textarea x-model="questForm.description" rows="2" required
-                                      class="pixel-input w-full bg-rpg-dark text-rpg-gold p-3 text-xs focus:outline-none resize-none"></textarea>
+                                      class="pixel-input w-full p-3 text-xs focus:outline-none resize-none"></textarea>
                         </div>
                         <div class="flex flex-wrap items-end gap-4">
-
                             <button type="submit" class="pixel-btn bg-rpg-gold text-rpg-dark px-6 py-3 text-xs">
                                 📋 POST QUEST
                             </button>
@@ -358,13 +418,106 @@
                     </form>
                 </div>
 
-                <div id="quest-list-container" style="margin-top: 2rem;">
+                <div class="pixel-card p-4 text-center border-2 border-rpg-border">
+                    <p class="text-[10px]" :class="(myParty.status || myParty.partyStatus) === 'EXECUTION' ? 'text-rpg-green' : 'text-rpg-gold'">
+                        Current Phase: <span x-text="myParty.status || myParty.partyStatus"></span>
+                    </p>
                 </div>
 
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                    <div class="space-y-4">
+                        <h3 class="text-xs text-rpg-goldLight flex items-center gap-2">⚔️ My Tasks</h3>
+
+                        <div class="space-y-4">
+                            <template x-for="q in myQuestsList" :key="q.id">
+                                <div class="pixel-border bg-rpg-dark p-4 border-2 transition-all duration-300 hover:brightness-110"
+                                     :class="{
+                                        'border-gray-600': q.rarity === 'COMMON',
+                                        'border-rpg-blue': q.rarity === 'RARE',
+                                        'border-rpg-purple shadow-[0_0_10px_rgba(139,92,246,0.2)]': q.rarity === 'EPIC',
+                                        'border-rpg-gold shadow-[0_0_15px_rgba(212,168,75,0.3)]': q.rarity === 'LEGENDARY'
+                                     }">
+
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="text-xs font-bold"
+                                            :class="{
+                                                'text-gray-400': q.rarity === 'COMMON',
+                                                'text-rpg-blue': q.rarity === 'RARE',
+                                                'text-rpg-purple': q.rarity === 'EPIC',
+                                                'text-rpg-gold': q.rarity === 'LEGENDARY'
+                                            }">
+                                            <span x-text="q.title"></span>
+                                        </h4>
+                                        <span class="text-[8px] px-1 bg-black text-white border border-white" x-text="q.status"></span>
+                                    </div>
+
+                                    <p class="text-[10px] text-gray-300 mb-3" x-text="q.description"></p>
+
+                                    <button x-show="(myParty.status || myParty.partyStatus) === 'EXECUTION' && q.status === 'APPROVED'"
+                                            @click="completeQuest(q.id)"
+                                            class="pixel-btn w-full py-2 text-[10px] text-white"
+                                            :class="{
+                                                'bg-gray-600': q.rarity === 'COMMON',
+                                                'bg-rpg-blue': q.rarity === 'RARE',
+                                                'bg-rpg-purple': q.rarity === 'EPIC',
+                                                'bg-rpg-green': q.rarity === 'LEGENDARY'
+                                            }">
+                                        COMPLETE QUEST
+                                    </button>
+
+                                    <div x-show="(myParty.status || myParty.partyStatus) === 'REVIEW'" class="text-[8px] border-t border-rpg-border mt-2 pt-2 text-center">
+                                        Status Final: <span :class="q.status === 'COMPLETED' ? 'text-rpg-green' : 'text-rpg-red'" x-text="q.status"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4" x-show="(myParty.status || myParty.partyStatus) === 'PLANNING' || reviewQuestsList.length > 0">
+                        <h3 class="text-xs text-rpg-purple flex items-center gap-2">⚖️ Quests to Review</h3>
+                        <div class="space-y-4">
+                            <template x-for="q in reviewQuestsList" :key="q.id">
+                                <div class="pixel-border bg-rpg-dark p-4 border-2 hover:brightness-110"
+                                     :class="{
+                                        'border-gray-600': q.rarity === 'COMMON',
+                                        'border-rpg-blue': q.rarity === 'RARE',
+                                        'border-rpg-purple': q.rarity === 'EPIC',
+                                        'border-rpg-gold': q.rarity === 'LEGENDARY'
+                                     }">
+
+                                    <h4 class="text-xs mb-2"
+                                        :class="{
+                                            'text-gray-400': q.rarity === 'COMMON',
+                                            'text-rpg-blue': q.rarity === 'RARE',
+                                            'text-rpg-purple': q.rarity === 'EPIC',
+                                            'text-rpg-gold': q.rarity === 'LEGENDARY'
+                                        }" x-text="q.title"></h4>
+
+                                    <p class="text-[10px] text-rpg-gray my-2" x-text="q.description"></p>
+
+                                    <div class="flex gap-2 mt-4">
+                                        <button @click="reviewQuest(q.id, true)" class="pixel-btn bg-rpg-green text-white flex-1 py-1 text-[8px]">APPROVE</button>
+                                        <button @click="reviewQuest(q.id, false)" class="pixel-btn bg-rpg-red text-white flex-1 py-1 text-[8px]">REJECT</button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div x-show="currentView === 'quests' && !myParty" class="pixel-card p-8 text-center mt-6">
+                <p class="text-rpg-red mb-4">🚫 ACESSO NEGADO</p>
+                <p class="text-xs text-rpg-gray">Você precisa estar em uma guilda para acessar o mural de missões.</p>
+                <button @click="currentView = 'tavern'" class="pixel-btn bg-rpg-gold text-rpg-dark px-4 py-2 text-[10px] mt-4">
+                    VOLTAR PARA A TAVERNA
+                </button>
             </div>
 
             <div x-show="currentView === 'users'" class="space-y-6">
-                <div class="pixel-card bg-rpg-darker p-4">
+                <div class="pixel-card p-4">
                     <h3 class="text-sm mb-4 text-rpg-goldLight">📜 Guild Registry</h3>
 
                     <div class="overflow-x-auto">

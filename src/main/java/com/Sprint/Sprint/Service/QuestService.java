@@ -2,6 +2,7 @@ package com.Sprint.Sprint.Service;
 
 import com.Sprint.Sprint.DTO.Request.CreateQuestDTO;
 import com.Sprint.Sprint.DTO.Request.ReviewQuestDTO;
+import com.Sprint.Sprint.DTO.Response.QuestResponseDTO;
 import com.Sprint.Sprint.Enums.QuestStatus;
 import com.Sprint.Sprint.Entity.Party;
 import com.Sprint.Sprint.Entity.Quest;
@@ -9,6 +10,7 @@ import com.Sprint.Sprint.Entity.User;
 import com.Sprint.Sprint.Enums.PartyStatus;
 import com.Sprint.Sprint.Repository.QuestRepository;
 import com.Sprint.Sprint.Repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -115,6 +117,57 @@ public class QuestService {
 
     public List<Quest> findAllQuests() {
         return questRepository.findAll();
+    }
+
+    public List<QuestResponseDTO> getMyQuests(User user) {
+        if (user.getCurrentParty() == null) {
+            return List.of();
+        }
+
+        List<Quest> quests = questRepository.findByPartyIdAndAdventurerId(
+                user.getCurrentParty().getId(),
+                user.getId()
+        );
+
+        return quests.stream()
+                .map(QuestResponseDTO::new)
+                .toList();
+    }
+
+    public List<QuestResponseDTO> getQuestsToReview(User user) {
+        if (user.getCurrentParty() == null) return List.of();
+
+        List<Quest> quests = questRepository.findByPartyIdAndReviewerIdAndStatus(
+                user.getCurrentParty().getId(),
+                user.getId(),
+                QuestStatus.PENDING_APPROVAL
+        );
+
+        return quests.stream().map(QuestResponseDTO::new).toList();
+    }
+
+    @Transactional
+    public Quest updateQuest(Long questId, CreateQuestDTO data, User loggedUser) {
+        Quest quest = questRepository.findById(questId)
+                .orElseThrow(() -> new RuntimeException("Quest not found."));
+
+        if (!quest.getAdventurer().getId().equals(loggedUser.getId())) {
+            throw new RuntimeException("You can only edit your own quests.");
+        }
+
+        if (quest.getParty().getPartyStatus() != PartyStatus.PLANNING) {
+            throw new RuntimeException("Quests can only be edited during PLANNING phase.");
+        }
+
+        // Updates
+        quest.setTitle(data.title());
+        quest.setDescription(data.description());
+        quest.setRarity(data.rarity());
+
+        // Set status to pending
+        quest.setStatus(QuestStatus.PENDING_APPROVAL);
+
+        return questRepository.save(quest);
     }
 
 }
