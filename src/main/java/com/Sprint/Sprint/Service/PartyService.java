@@ -11,8 +11,11 @@ import com.Sprint.Sprint.Repository.QuestRepository;
 import com.Sprint.Sprint.Repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,18 +36,38 @@ public class PartyService {
     public Party createParty(CreatePartyDTO data, User loggedUser) {
         Party party = new Party();
 
-        //montando objeto
+        // Validates previous party binding: blocks leaders from abandoning the group without disbanding it and removes common members from the old party
+        if (loggedUser.getCurrentParty() != null) {
+            if (loggedUser.getCurrentParty().getOwner().getId().equals(loggedUser.getId())) {
+                throw new RuntimeException("You are the LEADER of an active party. Disband it before creating a new one.");
+            }
+            loggedUser.getCurrentParty().getMembers().remove(loggedUser);
+            partyRepository.save(loggedUser.getCurrentParty());
+        }
+
+        // Set data BEFORE saving to avoid null errors or saving empty objects
+        boolean isPrivate = data.isPrivate() != null ? data.isPrivate() : false;
+        int maxMembers = data.maxMembers() != null ? data.maxMembers() : 10;
+
+        // Populating the party object
         party.setPartyName(data.partyName());
         party.setPartyDescription(data.partyDescription());
-
+        party.setPrivate(isPrivate);
+        party.setMaxMembers(maxMembers);
         party.setOwner(loggedUser);
 
-        partyRepository.save(party);
 
-        loggedUser.setCurrentParty(party);
-        userRepository.save(loggedUser);
+        // Try to save the populated object
+        try {
+            partyRepository.save(party);
 
-        return party;
+            loggedUser.setCurrentParty(party);
+            userRepository.save(loggedUser);
+
+            return party;
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "A party with the name '" + party.getPartyName() + "' already exists.");
+        }
     }
 
     public Party joinParty(Long partyId, User user) {
@@ -52,15 +75,69 @@ public class PartyService {
         Party party = partyRepository.findById(partyId)
                 .orElseThrow(() -> new RuntimeException("Party not found"));
 
-        if (party.equals(user.getCurrentParty())) {
-            throw new RuntimeException("You're already part of this party!");
+        // Validates previous affiliation: prevents leaders from leaving the group without disbanding it and removes common members from the old party.
+        if (user.getCurrentParty() != null) {
+            if (user.getCurrentParty().getOwner().getId().equals(user.getId())) {
+                throw new RuntimeException("You are the LEADER of your current party. You must Disband it before joining another.");
+            }
+            user.getCurrentParty().getMembers().remove(user);
+            partyRepository.save(user.getCurrentParty());
         }
 
-        user.setCurrentParty(party);
+        if (party.getMembers().contains(user)) throw new RuntimeException("Already a member");
+        if (party.getPendingMembers().contains(user)) throw new RuntimeException("Request already sent");
 
-        userRepository.save(user);
+        if (party.getMembers().size() >= party.getMaxMembers()) {
+            throw new RuntimeException("Party is full! Max: " + party.getMaxMembers());
+        }
+
+        // Public/Private logic
+        if (party.isPrivate()) {
+            party.getPendingMembers().add(user);
+            partyRepository.save(party);
+        } else {
+            user.setCurrentParty(party);
+            party.getMembers().add(user);
+            userRepository.save(user);
+            partyRepository.save(party);
+        }
 
         return party;
+    }
+
+    public void approveRequest(Long partyId, Long userId) {
+        Party party = partyRepository.findById(partyId).orElseThrow();
+        User user = userRepository.findById(userId).orElseThrow();
+
+        // Validates the candidate's current state: blocks approval if the user is leading another party (to prevent orphan groups) and automatically removes them from their previous party if they are just a member
+        if (user.getCurrentParty() != null) {
+            if (user.getCurrentParty().getOwner().getId().equals(user.getId())) {
+                throw new RuntimeException("Cannot approve: The user is currently leading another party.");
+            }
+            user.getCurrentParty().getMembers().remove(user);
+            partyRepository.save(user.getCurrentParty());
+        }
+
+        if (party.getPendingMembers().contains(user)) {
+            if (party.getMembers().size() >= party.getMaxMembers()) {
+                throw new RuntimeException("Cannot approve: Party is full.");
+            }
+
+            party.getPendingMembers().remove(user);
+            party.getMembers().add(user);
+            user.setCurrentParty(party);
+
+            userRepository.save(user);
+            partyRepository.save(party);
+        }
+    }
+
+    public void rejectRequest(Long partyId, Long userId) {
+        Party party = partyRepository.findById(partyId).orElseThrow();
+        User user = userRepository.findById(userId).orElseThrow();
+
+        party.getPendingMembers().remove(user);
+        partyRepository.save(party);
     }
 
     public void leaveParty(User loggedUser) {
