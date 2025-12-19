@@ -123,7 +123,36 @@ public class PartyController {
         return partyService.findAllParties();
     }
 
+    @Operation(summary = "Approve a pending member request")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Member approved successfully",
+                    content = @Content // Sem conteúdo pois retorna void
+            ),
+            @ApiResponse(responseCode = "404", description = "Party or User not found", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Party is full or User is not in pending list", content = @Content)
+    })
+    @PostMapping("/{partyId}/approve/{userId}")
+    public ResponseEntity<Void> approveRequest(@PathVariable Long partyId, @PathVariable Long userId) {
+        partyService.approveRequest(partyId, userId);
+        return ResponseEntity.ok().build();
+    }
 
+    @Operation(summary = "Reject a pending member request")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Member request rejected successfully",
+                    content = @Content // Sem conteúdo pois retorna void
+            ),
+            @ApiResponse(responseCode = "404", description = "Party or User not found", content = @Content)
+    })
+    @PostMapping("/{partyId}/reject/{userId}")
+    public ResponseEntity<Void> rejectRequest(@PathVariable Long partyId, @PathVariable Long userId) {
+        partyService.rejectRequest(partyId, userId);
+        return ResponseEntity.ok().build();
+    }
 
     @Operation(summary = "Start Planning Phase", description = "Moves the party from LOBBY to PLANNING. Only the owner can do this.")
     @ApiResponses({
