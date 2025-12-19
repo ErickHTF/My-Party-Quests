@@ -4,6 +4,8 @@ import com.Sprint.Sprint.Enums.PartyStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "tb_parties")
@@ -13,7 +15,7 @@ public class Party {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String partyName;
 
     @Column(nullable = false)
@@ -28,6 +30,20 @@ public class Party {
 
     @OneToMany(mappedBy = "currentParty", fetch = FetchType.EAGER)
     private java.util.List<User> members;
+
+    @Column(columnDefinition = "boolean default false")
+    private boolean isPrivate = false; // Standard public
+
+    @ManyToMany
+    @JoinTable(
+            name = "party_pending_members",
+            joinColumns = @JoinColumn(name = "party_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+
+    private List<User> pendingMembers = new ArrayList<>();
+
+    private Integer maxMembers = 8; // Standard 8
 
     private LocalDateTime currentPhaseExpiration;
 
@@ -95,5 +111,29 @@ public class Party {
 
     public void setMembers(java.util.List<User> members) {
         this.members = members;
+    }
+
+    public boolean isPrivate() {
+        return isPrivate;
+    }
+
+    public void setPrivate(boolean aPrivate) {
+        isPrivate = aPrivate;
+    }
+
+    public List<User> getPendingMembers() {
+        return pendingMembers;
+    }
+
+    public void setPendingMembers(List<User> pendingMembers) {
+        this.pendingMembers = pendingMembers;
+    }
+
+    public Integer getMaxMembers() {
+        return maxMembers;
+    }
+
+    public void setMaxMembers(Integer maxMembers) {
+        this.maxMembers = maxMembers;
     }
 }
