@@ -34,6 +34,60 @@ function questParty() {
             'LEGENDARY': 500
         },
 
+        // Dentro do objeto questParty() ...
+
+        async approveMember(userId) {
+            if (!this.myParty) return;
+
+            try {
+                // Chama o endpoint que acabamos de criar
+                await this.api(`/parties/${this.myParty.id}/approve/${userId}`, {
+                    method: 'POST'
+                });
+
+                this.showToast('Member approved!', 'success');
+                await this.loadMe(); // Recarrega para atualizar a lista
+            } catch (err) {
+                this.showToast('Error approving: ' + err.message, 'error');
+            }
+        },
+
+        async rejectMember(userId) {
+            if (!this.myParty) return;
+
+            try {
+                // Chama o endpoint que acabamos de criar
+                await this.api(`/parties/${this.myParty.id}/reject/${userId}`, {
+                    method: 'POST'
+                });
+
+                this.showToast('Member rejected.', 'info');
+                await this.loadMe(); // Recarrega para atualizar a lista
+            } catch (err) {
+                this.showToast('Error rejecting: ' + err.message, 'error');
+            }
+        },
+
+        get uniquePendingMembers() {
+            if (!this.myParty || !this.myParty.pendingMembers) return [];
+
+            // Cria um Set para rastrear IDs já vistos
+            const seen = new Set();
+            return this.myParty.pendingMembers.filter(member => {
+                const isDuplicate = seen.has(member.id);
+                seen.add(member.id);
+                return !isDuplicate;
+            });
+        },
+
+        isPending(party) {
+            // Proteçao contra nulos (caso o usuário ou a lista ainda não tenham carregado)
+            if (!this.user || !party || !party.pendingMembers) return false;
+
+            // Verifica se o meu ID está na lista de pendentes
+            return party.pendingMembers.some(m => m.id === this.user.id);
+        },
+
         // --- COMPUTED PROPERTIES (A Mágica da Interface) ---
 
         // 1. Recompensa atual baseada no select do form
@@ -99,15 +153,25 @@ function questParty() {
                 this.logout();
             }
 
+
+
             // Polling: Atualiza dados a cada 2s para ver o XP subir em tempo real
             setInterval(() => {
                 if (this.token && this.user) {
                     this.loadData();
                 }
             }, 2000);
+
+            partyForm: {
+                name: ''
+                    description: ''
+                    isPrivate: false // <--- Adicione isso aqui para iniciar como Público
+                    maxMembers: 10
+            }
         },
 
         // --- API HELPER ---
+        // Substitua a função api existente por esta versão melhorada:
         async api(endpoint, options = {}) {
             const headers = {
                 'Content-Type': 'application/json',
@@ -120,16 +184,26 @@ function questParty() {
                     headers: { ...headers, ...options.headers }
                 });
 
-                if (!res.ok) {
-                    const error = await res.text();
-                    throw new Error(error || `HTTP ${res.status}`);
+                // Tenta ler a resposta como texto primeiro
+                const text = await res.text();
+
+                // Tenta converter para JSON
+                let data = null;
+                try {
+                    data = text ? JSON.parse(text) : null;
+                } catch (e) {
+                    data = text;
                 }
 
-                const text = await res.text();
-                if (!text) return null;
-                try { return JSON.parse(text); } catch (e) { return text; }
+                // Se deu erro HTTP (400, 500, etc)
+                if (!res.ok) {
+                    // Se o backend mandou uma mensagem JSON (como no seu log), usa ela
+                    const errorMessage = (data && data.message) ? data.message : (typeof data === 'string' ? data : `HTTP ${res.status}`);
+                    throw new Error(errorMessage);
+                }
+
+                return data;
             } catch (err) {
-                // console.error(err); // Silencia erros de polling no console
                 throw err;
             }
         },
@@ -202,7 +276,28 @@ function questParty() {
         async loadMe() {
             try {
                 const me = await this.api('/user/me');
-                // Só atualiza localstorage se mudar algo para economizar escrita
+
+                // --- LÓGICA DE NOTIFICAÇÃO (BASEADA EM NOME) ---
+                if (this.user) {
+                    const oldName = this.user.partyName;
+                    const newName = me.partyName;
+
+                    // Definição de "Sem Party": pode ser null, undefined, vazio ou "Freelancer"
+                    const wasLoneWolf = !oldName || oldName === 'Lone Wolf';
+                    const isNowInParty = newName && newName !== 'Lone Wolf';
+
+                    // Se antes eu era freelancer e agora tenho um nome de party, fui aceito!
+                    if (wasLoneWolf && isNowInParty) {
+                        this.showToast('⚔️ You have been accepted into the party!', 'success');
+
+                        // Opcional: Efeito sonoro
+                        // const audio = new Audio('https://freesound.org/data/previews/341/341695_5858296-lq.mp3');
+                        // audio.play().catch(e => {});
+                    }
+                }
+                // -----------------------------------------------
+
+                // Atualiza o usuário se houver mudanças
                 if (JSON.stringify(this.user) !== JSON.stringify(me)) {
                     this.user = me;
                     localStorage.setItem('quest_user', JSON.stringify(this.user));
@@ -217,32 +312,64 @@ function questParty() {
 
         // --- ACTIONS: PARTY ---
         async createParty() {
+            if (!this.partyForm.name || !this.partyForm.description) {
+                this.showToast('Please fill in all fields', 'error');
+                return;
+            }
+
             try {
+                this.loading = true; // Feedback visual
                 await this.api('/parties', {
                     method: 'POST',
                     body: JSON.stringify({
                         partyName: this.partyForm.name,
-                        partyDescription: this.partyForm.description
+                        partyDescription: this.partyForm.description,
+                        isPrivate: this.partyForm.isPrivate,
+                        maxMembers: parseInt(this.partyForm.maxMembers) || 10
                     })
                 });
+
                 this.showToast('Party created successfully!', 'success');
                 this.showCreateParty = false;
-                this.partyForm = { name: '', description: '' };
-                await this.loadParties();
+                this.partyForm = { name: '', description: '', isPrivate: false, maxMembers: 10 };
+
+                // Recarrega tudo
                 await this.loadMe();
-            } catch (err) {
-                this.showToast('Failed: ' + err.message, 'error');
+                await this.loadParties();
+            } catch (error) {
+                // Se der erro, mostra a mensagem limpa
+                this.showToast(error.message, 'error');
+
+                // IMPORTANTE: Recarrega o usuário mesmo no erro.
+                // Se o erro foi "Você já é líder", isso fará a party antiga aparecer na tela para você dar Disband.
+                await this.loadMe();
+            } finally {
+                this.loading = false;
             }
         },
 
         async joinParty(id) {
             try {
                 this.loading = true;
+
+                // 1. Descobre se a party é privada antes da requisição
+                const targetParty = this.parties.find(p => p.id === id);
+                const isPrivate = targetParty ? (targetParty.isPrivate || targetParty.private) : false;
+
+                // Faz a requisição
                 await this.api(`/parties/join/${id}`, { method: 'POST' });
+
+                // Recarrega dados
                 await this.loadMe();
                 await this.loadParties();
-                this.showParties = false;
-                this.showToast('Joined successfully!', 'success');
+
+                // 2. Exibe a mensagem correta baseada no tipo da party
+                if (isPrivate) {
+                    this.showToast('Request sent! Awaiting approval.', 'info'); // Azul/Neutro
+                } else {
+                    this.showToast('Joined party successfully!', 'success'); // Verde
+                }
+
             } catch (err) {
                 this.showToast('Failed: ' + err.message, 'error');
             } finally {

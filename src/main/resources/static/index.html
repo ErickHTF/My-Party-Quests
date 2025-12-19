@@ -17,8 +17,8 @@
                 extend: {
                     colors: {
                         rpg: {
-                            dark: '#1a1410',   /* Tom Médio (Cards) */
-                            darker: '#0f0d0a', /* Tom Profundo (Fundo) */
+                            dark: '#1a1410',
+                            darker: '#0f0d0a',
                             gold: '#d4a84b',
                             goldLight: '#f0d78c',
                             red: '#c73e3e',
@@ -38,14 +38,15 @@
     </script>
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     <link rel="stylesheet" href="styles.css">
+
     <style>
         [x-cloak] { display: none !important; }
 
-        /* Estilos Pixel Art */
         .pixel-card {
             border: 4px solid #5c4d3d;
-            background-color: #1a1410; /* Mudado para rpg-dark para contraste */
+            background-color: #1a1410;
             box-shadow: 4px 4px 0px #000;
         }
 
@@ -73,15 +74,71 @@
             filter: grayscale(1);
         }
 
-        /* Inputs agora são mais escuros para parecerem 'buracos' no card */
         .pixel-input {
             border: 4px solid #5c4d3d;
-            background-color: #0f0d0a; /* rpg-darker */
+            background-color: #0f0d0a;
             color: #f0d78c;
         }
 
+        /* --- ESTILOS DO NOVO STEPPER --- */
+        .stepper-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #0f0d0a; /* rpg-darker */
+            border: 4px solid #5c4d3d; /* rpg-border */
+            padding: 0 10px;
+            height: 46px; /* Mesma altura aproximada dos inputs */
+            color: #f0d78c; /* rpg-goldLight */
+        }
+
+        .stepper-btn {
+            background: none;
+            border: none;
+            color: #d4a84b; /* rpg-gold */
+            font-size: 1.2rem;
+            cursor: pointer;
+            font-weight: bold;
+            user-select: none;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .stepper-btn:hover {
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .stepper-value {
+            font-size: 1rem;
+            font-family: 'Press Start 2P', cursive;
+        }
+        /* ------------------------------- */
+
         .blink { animation: blinker 1s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
+
+        @keyframes questUnlock {
+            0% {
+                box-shadow: 3px 3px 0px #000;
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            20% {
+                box-shadow: 0 0 15px #d4a84b;
+                border-color: #f0d78c;
+                transform: scale(1.05);
+                filter: brightness(1.2);
+            }
+            100% {
+                box-shadow: 3px 3px 0px #000;
+                transform: scale(1);
+                filter: brightness(1);
+            }
+        }
+
+        .quest-unlock-anim {
+            animation: questUnlock 2s ease-out 1 forwards;
+        }
 
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: #0f0d0a; }
@@ -197,16 +254,21 @@
                         :class="currentView === 'tavern' ? 'bg-rpg-gold text-rpg-dark' : 'bg-rpg-gray'">
                     🍺 TAVERN
                 </button>
+
                 <button @click="currentView = 'quests'"
-                        class="pixel-btn px-4 py-2 text-xs"
+                        class="pixel-btn px-4 py-2 text-xs transition-colors duration-200"
                         :disabled="!myParty"
                         :class="{
                             'bg-rpg-gold text-rpg-dark': currentView === 'quests',
                             'bg-rpg-gray': currentView !== 'quests',
-                            'opacity-50 cursor-not-allowed grayscale': !myParty
+                            'opacity-50 cursor-not-allowed grayscale': !myParty,
+
+                            /* Classe de Animação (Só roda se tiver party) */
+                            'quest-unlock-anim': myParty
                         }">
                     📋 QUESTS <span x-show="!myParty">🔒</span>
                 </button>
+
                 <button @click="currentView = 'users'"
                         class="pixel-btn px-4 py-2 text-xs"
                         :class="currentView === 'users' ? 'bg-rpg-gold text-rpg-dark' : 'bg-rpg-gray'">
@@ -242,15 +304,21 @@
                 </div>
 
                 <template x-if="myParty">
-                    <div class="pixel-card p-4 border-l-4 border-rpg-green">
-                        <h3 class="text-sm mb-2 text-rpg-green">
-                            <span x-text="myParty.partyName || myParty.name"></span>
-                        </h3>
+                    <div class="pixel-card p-4 border-l-4 border-rpg-blue shadow-[0_0_15px_rgba(74,124,199,0.1)]">
+
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-sm text-rpg-blue flex items-center gap-2">
+                                <span>🛡️</span> <span x-text="myParty.partyName || myParty.name"></span>
+                            </h3>
+                            <span class="text-[9px] px-2 py-1 bg-rpg-darker border border-rpg-gray text-rpg-gray">
+                                <span x-text="myParty.members ? myParty.members.length : 0"></span>/<span x-text="myParty.maxMembers || 10"></span>
+                            </span>
+                        </div>
 
                         <p class="text-xs text-rpg-gray mb-4" x-text="myParty.partyDescription || myParty.description"></p>
 
                         <div class="mb-4">
-                            <span class="text-xs text-rpg-gold">Status: </span>
+                            <span class="text-xs text-rpg-blue">Status: </span>
                             <span class="text-xs uppercase bg-black px-1 text-white"
                                   x-text="myParty.status || myParty.partyStatus || 'LOBBY'"></span>
                         </div>
@@ -259,7 +327,7 @@
                             <h4 class="text-[10px] text-rpg-gray mb-2">ADVENTURERS</h4>
                             <div class="flex flex-wrap gap-2">
                                 <template x-if="myParty.owner">
-                                    <span class="pixel-border bg-rpg-darker px-2 py-1 text-xs flex items-center gap-1 border-rpg-gold text-rpg-gold">
+                                    <span class="pixel-border bg-rpg-darker px-2 py-1 text-xs flex items-center gap-1 border-rpg-blue text-rpg-blue">
                                         <span>👑</span>
                                         <span x-text="myParty.owner.nickname || myParty.owner.username"></span>
                                     </span>
@@ -272,6 +340,31 @@
                                             <span x-text="m.nickname || m.username"></span>
                                         </span>
                                     </template>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div x-show="isPartyOwner && myParty.pendingMembers && myParty.pendingMembers.length > 0"
+                             class="mb-4 border-t-2 border-dashed border-rpg-gray pt-4">
+
+                            <h4 class="text-[10px] text-yellow-400 mb-2 blink">⚠️ PENDING JOIN REQUESTS</h4>
+
+                            <div class="flex flex-col gap-2">
+                                <template x-for="req in myParty.pendingMembers.filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i)" :key="req.id">
+                                    <div class="flex justify-between items-center bg-gray-900 p-2 border border-rpg-border shadow-md">
+                                        <div class="flex flex-col">
+                                            <span class="text-xs text-white font-bold" x-text="req.nickname || req.username"></span>
+                                            <span class="text-[8px] text-rpg-gray">Wants to join</span>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <button @click="approveMember(req.id)" class="pixel-btn bg-rpg-green text-white px-2 py-1 text-[8px] hover:scale-105">
+                                                ✓ ACCEPT
+                                            </button>
+                                            <button @click="rejectMember(req.id)" class="pixel-btn bg-rpg-red text-white px-2 py-1 text-[8px] hover:scale-105">
+                                                ✗ DENY
+                                            </button>
+                                        </div>
+                                    </div>
                                 </template>
                             </div>
                         </div>
@@ -303,6 +396,13 @@
                     </div>
                 </template>
 
+                <div x-show="myParty && (myParty.status === 'LOBBY' || myParty.partyStatus === 'LOBBY')"
+                     class="mb-6 border-2 border-rpg-gold bg-rpg-darker p-2 text-center shadow-sm">
+                    <p class="text-[10px] text-rpg-gold">
+                        The party is currently in the LOBBY phase. Prepare for the adventure.
+                    </p>
+                </div>
+
                 <div class="pixel-card p-4">
 
                     <div class="flex flex-wrap justify-between items-center gap-4 cursor-pointer select-none"
@@ -329,19 +429,84 @@
                          x-transition.opacity.duration.300ms
                          class="mt-4 pt-4 border-t border-rpg-border grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-                        <template x-for="party in parties" :key="party.id">
-                            <div class="pixel-border bg-rpg-darker p-4 h-full flex flex-col justify-between hover:border-rpg-gold transition-colors">
+                        <template x-for="party in parties.filter(p => myParty && p.id === myParty.id)" :key="'my-' + party.id">
+                            <div class="pixel-border p-4 h-full flex flex-col justify-between transition-all duration-200 bg-rpg-dark border-rpg-blue hover:border-rpg-gold hover:shadow-[0_0_10px_rgba(74,124,199,0.2)]">
                                 <div>
-                                    <h4 class="text-xs text-rpg-goldLight mb-2" x-text="party.partyName || party.name"></h4>
-                                    <p class="text-xs text-rpg-gray mb-2 line-clamp-2" x-text="party.partyDescription || party.description"></p>
-                                    <span class="text-xs px-2 py-1 bg-rpg-gray text-white"
-                                          x-text="party.status || party.partyStatus || 'LOBBY'"></span>
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="text-xs font-bold truncate pr-2 text-rpg-blue" x-text="party.partyName || party.name"></h4>
+                                        <span x-show="party.isPrivate || party.private" class="text-[10px]" title="Private">🔒</span>
+                                        <span x-show="!(party.isPrivate || party.private)" class="text-[10px]" title="Public">🌍</span>
+                                    </div>
+                                    <p class="text-[10px] text-rpg-gray mb-2 line-clamp-2" x-text="party.partyDescription || party.description"></p>
+
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[8px] px-1 text-white bg-rpg-blue border border-rpg-blue"
+                                              x-text="party.status || party.partyStatus || 'LOBBY'"></span>
+
+                                        <span class="text-[8px] text-rpg-gray"
+                                              x-text="(party.members ? party.members.length : 0) + '/' + (party.maxMembers || 10)"></span>
+                                    </div>
                                 </div>
                                 <div class="mt-4">
+                                    <button class="pixel-btn w-full py-2 text-[10px] text-white transition-transform active:scale-95 bg-rpg-blue hover:bg-rpg-gold hover:text-rpg-dark cursor-default">
+                                        YOUR PARTY
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-for="party in parties.filter(p => !myParty || p.id !== myParty.id)" :key="party.id">
+                            <div class="pixel-border p-4 h-full flex flex-col justify-between transition-all duration-200 bg-rpg-dark"
+                                 :class="{
+                                    'border-rpg-red border-dashed': (party.isPrivate || party.private),
+                                    'border-gray-500 hover:border-rpg-gold hover:shadow-[0_0_10px_rgba(212,168,75,0.2)]': !(party.isPrivate || party.private)
+                                 }">
+
+                                <div>
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="text-xs font-bold truncate pr-2"
+                                            :class="{
+                                                'text-rpg-red': (party.isPrivate || party.private),
+                                                'text-gray-400': !(party.isPrivate || party.private)
+                                            }"
+                                            x-text="party.partyName || party.name"></h4>
+
+                                        <span x-show="party.isPrivate || party.private" class="text-[10px]" title="Private">🔒</span>
+                                        <span x-show="!(party.isPrivate || party.private)" class="text-[10px]" title="Public">🌍</span>
+                                    </div>
+                                    <p class="text-[10px] text-rpg-gray mb-2 line-clamp-2" x-text="party.partyDescription || party.description"></p>
+
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[8px] px-1 text-white border"
+                                              :class="{
+                                                  'bg-rpg-red border-rpg-red': (party.isPrivate || party.private),
+                                                  'bg-gray-700 border-gray-600': !(party.isPrivate || party.private)
+                                              }"
+                                              x-text="party.status || party.partyStatus || 'LOBBY'"></span>
+
+                                        <span class="text-[8px] font-bold flex items-center gap-1"
+                                              :class="(party.members && party.members.length >= (party.maxMembers || 10)) ? 'text-rpg-red' : 'text-rpg-gray'">
+                                            <span>👥</span>
+                                            <span x-text="(party.members ? party.members.length : 0) + '/' + (party.maxMembers || 10)"></span>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
                                     <button @click="joinParty(party.id)"
-                                            class="pixel-btn bg-rpg-green text-white w-full py-1 text-xs"
-                                            :disabled="myParty">
-                                        JOIN
+                                            class="pixel-btn w-full py-2 text-[10px] text-white transition-transform active:scale-95"
+                                            :disabled="isPending(party) || (party.members && party.members.length >= (party.maxMembers || 10))"
+                                            :class="{
+                                                'bg-rpg-red opacity-50 cursor-not-allowed': (party.members && party.members.length >= (party.maxMembers || 10)),
+                                                'bg-gray-900 border border-yellow-600 text-yellow-500 cursor-wait opacity-80': isPending(party) && !(party.members && party.members.length >= (party.maxMembers || 10)),
+                                                'bg-gray-800 border border-rpg-red text-gray-300 hover:text-white hover:bg-rpg-red': !isPending(party) && (party.isPrivate || party.private) && !(party.members && party.members.length >= (party.maxMembers || 10)),
+                                                'bg-gray-700 hover:bg-rpg-gold hover:text-rpg-dark': !isPending(party) && !(party.isPrivate || party.private) && !(party.members && party.members.length >= (party.maxMembers || 10))
+                                            }">
+
+                                        <span x-show="(party.members && party.members.length >= (party.maxMembers || 10))">FULL</span>
+                                        <span x-show="!(party.members && party.members.length >= (party.maxMembers || 10)) && isPending(party)">⏳ REQUEST SENT</span>
+                                        <span x-show="!(party.members && party.members.length >= (party.maxMembers || 10)) && !isPending(party) && (party.isPrivate || party.private)">REQUEST JOIN</span>
+                                        <span x-show="!(party.members && party.members.length >= (party.maxMembers || 10)) && !isPending(party) && !(party.isPrivate || party.private)">JOIN PARTY</span>
                                     </button>
                                 </div>
                             </div>
@@ -349,7 +514,7 @@
 
                         <template x-if="parties.length === 0">
                             <p class="text-xs text-rpg-gray col-span-full text-center py-4">
-                                No parties available. Create one to start your adventure!
+                                No parties available.
                             </p>
                         </template>
                     </div>
@@ -371,7 +536,42 @@
                                 <textarea x-model="partyForm.description" rows="3"
                                           class="pixel-input w-full p-3 text-xs focus:outline-none resize-none"></textarea>
                             </div>
-                            <div class="flex gap-2">
+
+                            <div class="flex grid grid-cols-2 gap-4">
+                                <div x-init="partyForm.maxMembers = partyForm.maxMembers || 2">
+                                    <label class="block text-xs mb-2">Party Size</label>
+                                    <div class="stepper-container w-full">
+                                        <button type="button"
+                                                @click="partyForm.maxMembers > 2 ? partyForm.maxMembers-- : null"
+                                                class="stepper-btn"
+                                                :class="partyForm.maxMembers <= 2 ? 'opacity-50 cursor-not-allowed' : ''">
+                                            &lt;
+                                        </button>
+
+                                        <span class="stepper-value" x-text="partyForm.maxMembers || 2">2</span>
+
+                                        <button type="button"
+                                                @click="partyForm.maxMembers < 10 ? partyForm.maxMembers++ : null"
+                                                class="stepper-btn"
+                                                :class="partyForm.maxMembers >= 10 ? 'opacity-50 cursor-not-allowed' : ''">
+                                            &gt;
+                                        </button>
+                                    </div>
+                                    <input type="hidden" x-model="partyForm.maxMembers" name="maxMembers">
+                                </div>
+                                <div>
+                                    <label class="block text-xs mb-2">Type</label>
+                                    <button type="button"
+                                            @click="partyForm.isPrivate = !partyForm.isPrivate"
+                                            class="pixel-btn w-full px-3 text-xs flex items-center justify-center gap-2 transition-colors duration-200 h-[46px]"
+                                            :class="partyForm.isPrivate ? 'bg-rpg-red text-white' : 'bg-rpg-green text-white'">
+                                        <span x-show="!partyForm.isPrivate">🌍 PUBLIC</span>
+                                        <span x-show="partyForm.isPrivate">🔒 PRIVATE</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-2 mt-4">
                                 <button type="submit" class="pixel-btn flex-1 bg-rpg-gold text-rpg-dark py-2 text-xs">
                                     CREATE
                                 </button>
@@ -543,9 +743,18 @@
                                             <span class="text-rpg-goldLight" x-text="u.nickname"></span>
                                             <span class="text-[10px] text-rpg-gray" x-text="'@' + u.username"></span>
 
-                                            <span class="text-[9px] mt-1 px-1 py-0.5 w-fit border border-rpg-gray"
-                                                  :class="u.partyName === 'Freelancer' || !u.partyName ? 'text-rpg-gray border-dashed' : 'text-rpg-blue bg-rpg-darker border-solid'"
-                                                  x-text="u.partyName || 'Freelancer'"></span>
+                                            <span class="text-[9px] mt-1 px-1 py-0.5 w-fit border"
+                                                  :class="{
+                                                  /* 1. Trocar aqui: Condição para cor cinza (sem party ou Lone Wolf) */
+                                                  'text-rpg-gray border-rpg-gray border-dashed': !u.partyName || u.partyName === 'Lone Wolf',
+
+                                                  /* (Esta linha do meio não muda) */
+                                                  'text-rpg-blue border-rpg-blue bg-rpg-darker border-solid': u.partyName && myParty && u.partyName === (myParty.partyName || myParty.name),
+
+                                                  /* 2. Trocar aqui: Condição para cor Slate (outras parties) */
+                                                  'text-slate-400 border-slate-400 bg-rpg-darker border-solid': u.partyName && u.partyName !== 'Lone Wolf' && (!myParty || u.partyName !== (myParty.partyName || myParty.name))}"
+                                                  x-text="u.partyName || 'Lone Wolf'">
+                                            </span>
                                         </div>
                                     </td>
                                     <td class="p-2">
