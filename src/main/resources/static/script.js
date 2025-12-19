@@ -9,6 +9,26 @@ function questParty() {
         showParties: false,
         toasts: [],
 
+        headerImages: ['1.png', '2.png'],
+        currentHeaderImage: 0,
+        headerInterval: null,
+
+        // Listas de dados
+        myQuestsList: [],
+        reviewQuestsList: [],
+        parties: [],
+        quests: [],
+        users: [],
+
+        startHeaderRotation() {
+            if (this.headerInterval) return;
+
+            this.headerInterval = setInterval(() => {
+                this.currentHeaderImage =
+                    (this.currentHeaderImage + 1) % this.headerImages.length;
+            }, 10000);
+        },
+
         // Listas de dados
         myQuestsList: [],
         reviewQuestsList: [],
@@ -35,7 +55,6 @@ function questParty() {
         },
 
         // Dentro do objeto questParty() ...
-
         async approveMember(userId) {
             if (!this.myParty) return;
 
@@ -153,7 +172,13 @@ function questParty() {
                 this.logout();
             }
 
+            // 🔥 inicia rotação do header
+            this.startHeaderRotation();
 
+            // polling
+            setInterval(() => {
+                if (this.token) this.loadData();
+            }, 10000);
 
             // Polling: Atualiza dados a cada 2s para ver o XP subir em tempo real
             setInterval(() => {
