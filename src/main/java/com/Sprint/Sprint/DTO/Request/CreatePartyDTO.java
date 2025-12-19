@@ -7,6 +7,12 @@ public record CreatePartyDTO(
         String partyName,
 
         @NotBlank(message = "Description is mandatory")
-        String partyDescription)
+        String partyDescription,
+
+        Boolean isPrivate,
+
+        @NotBlank(message = "Max members is mandatory")
+        Integer maxMembers
+    )
 {
 }
