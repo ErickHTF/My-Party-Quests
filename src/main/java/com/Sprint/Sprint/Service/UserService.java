@@ -52,7 +52,7 @@ public class UserService {
 
         String partyName = (user.getCurrentParty() != null)
                 ? user.getCurrentParty().getPartyName()
-                : "Freelancer";
+                : "Lone Wolf";
 
         return new UserResponseDTO(
                 user.getId(),
