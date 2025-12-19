@@ -39,6 +39,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Integer xp = 0; // 0 by default
 
+    @Column(columnDefinition = "integer default 0")
+    private Integer questsCompleted = 0;
+
     public UserRole getRole() {
         return role;
     }
@@ -100,6 +103,14 @@ public class User implements UserDetails {
 
     public void setXp(Integer xp) {
         this.xp = xp;
+    }
+
+    public Integer getQuestsCompleted() {
+        return questsCompleted;
+    }
+
+    public void setQuestsCompleted(Integer questsCompleted) {
+        this.questsCompleted = questsCompleted;
     }
 
     @Override

@@ -258,12 +258,10 @@ public class PartyService {
 
         party.setPartyStatus(PartyStatus.REVIEW);
 
-        // 2. Busca todas as quests desse grupo
         List<Quest> partyQuests = questRepository.findByPartyId(partyId);
 
-        // 3. Distribui os prêmios (Payout)
+        //Iterates through quests to process approved payouts and increment the adventurer's completed quests counter
         for (Quest quest : partyQuests) {
-            // Regra: Só paga se estiver APROVADA e se AINDA NÃO FOI PAGA
             if (quest.getStatus() == QuestStatus.COMPLETED && !quest.isRewardClaimed()) {
 
                 User owner = quest.getAdventurer();
@@ -275,6 +273,9 @@ public class PartyService {
                 int currentXp = owner.getXp() != null ? owner.getXp() : 0;
                 int rewardXp = quest.getXpReward() != null ? quest.getXpReward() : 0;
                 owner.setXp(currentXp + rewardXp);
+
+                int currentQuests = owner.getQuestsCompleted() != null ? owner.getQuestsCompleted() : 0;
+                owner.setQuestsCompleted(owner.getQuestsCompleted() + 1);
 
                 quest.setRewardClaimed(true);
 
