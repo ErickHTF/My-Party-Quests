@@ -156,4 +156,11 @@ public class QuestController {
 
         return ResponseEntity.ok(new QuestResponseDTO(questService.updateQuest(id, data, user)));
     }
+
+    @Operation(summary = "Get Quest Details", description = "Get details of a specific quest for editing.")
+    @GetMapping("/{id}")
+    public ResponseEntity<QuestResponseDTO> getQuestById(@PathVariable Long id) {
+        Quest quest = questService.findById(id);
+        return ResponseEntity.ok(new QuestResponseDTO(quest));
+    }
 }

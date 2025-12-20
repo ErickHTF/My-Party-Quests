@@ -649,14 +649,14 @@
 
                         <div class="space-y-4">
                             <template x-for="q in myQuestsList" :key="q.id">
-                                <div x-show="q.status !== 'PENDING_APPROVAL'"
-                                     class="pixel-border bg-rpg-dark p-4 border-2 transition-all duration-300 hover:brightness-110"
+                                <div class="pixel-border bg-rpg-dark p-4 border-2 transition-all duration-300 hover:brightness-110"
                                      :class="{
-                'border-gray-600': q.rarity === 'COMMON',
-                'border-rpg-blue': q.rarity === 'RARE',
-                'border-rpg-purple shadow-[0_0_10px_rgba(139,92,246,0.2)]': q.rarity === 'EPIC',
-                'border-rpg-gold shadow-[0_0_15px_rgba(212,168,75,0.3)]': q.rarity === 'LEGENDARY'
-             }">
+                                        'border-gray-600': q.rarity === 'COMMON',
+                                        'border-rpg-blue': q.rarity === 'RARE',
+                                        'border-rpg-purple shadow-[0_0_10px_rgba(139,92,246,0.2)]': q.rarity === 'EPIC',
+                                        'border-rpg-gold shadow-[0_0_15px_rgba(212,168,75,0.3)]': q.rarity === 'LEGENDARY',
+                                        'border-rpg-red shadow-[0_0_15px_rgba(199,62,62,0.4)]': q.status === 'REJECTED'
+                                     }">
 
                                     <div class="flex justify-between items-start mb-2">
                                         <h4 class="text-xs font-bold"
@@ -668,10 +668,24 @@
                                             }">
                                             <span x-text="q.title"></span>
                                         </h4>
-                                        <span class="text-[8px] px-1 bg-black text-white border border-white" x-text="q.status"></span>
+                                        <span class="text-[8px] px-1 bg-black text-white border"
+                                              :class="q.status === 'REJECTED' ? 'border-rpg-red text-rpg-red' : 'border-white'"
+                                              x-text="q.status"></span>
                                     </div>
 
                                     <p class="text-[10px] text-gray-300 mb-3" x-text="q.description"></p>
+
+                                    <template x-if="q.status === 'REJECTED' && q.reviewerFeedback">
+                                        <div class="bg-rpg-red/20 border border-rpg-red p-2 mb-3 text-[8px] text-white">
+                                            <span class="text-rpg-red font-bold">COMMENT:</span> <span x-text="q.reviewerFeedback"></span>
+                                        </div>
+                                    </template>
+
+                                    <button x-show="q.status === 'REJECTED' && (myParty.status || myParty.partyStatus) === 'PLANNING'"
+                                            @click="openEditQuest(q)"
+                                            class="pixel-btn w-full py-2 text-[10px] bg-rpg-gold text-rpg-dark mb-2">
+                                        ⚒️ FIX QUEST (EDIT)
+                                    </button>
 
                                     <button x-show="(myParty.status || myParty.partyStatus) === 'EXECUTION' && q.status === 'APPROVED'"
                                             @click="completeQuest(q.id)"
@@ -717,8 +731,7 @@
                                     <p class="text-[10px] text-rpg-gray my-2" x-text="q.description"></p>
 
                                     <div class="flex gap-2 mt-4">
-                                        <button @click="reviewQuest(q.id, true)" class="pixel-btn bg-rpg-green text-white flex-1 py-1 text-[8px]">APPROVE</button>
-                                        <button @click="reviewQuest(q.id, false)" class="pixel-btn bg-rpg-red text-white flex-1 py-1 text-[8px]">REJECT</button>
+                                        <button @click="openReviewModal(q)" class="pixel-btn bg-rpg-purple text-white flex-1 py-1 text-[8px]">⚖️ JUDGE</button>
                                     </div>
                                 </div>
                             </template>
@@ -759,14 +772,9 @@
 
                                             <span class="text-[9px] mt-1 px-1 py-0.5 w-fit border"
                                                   :class="{
-                                                  /* 1. Trocar aqui: Condição para cor cinza (sem party ou Lone Wolf) */
                                                   'text-rpg-gray border-rpg-gray border-dashed': !u.partyName || u.partyName === 'Lone Wolf',
-
-                                                  /* (Esta linha do meio não muda) */
                                                   'text-rpg-blue border-rpg-blue bg-rpg-darker border-solid': u.partyName && myParty && u.partyName === (myParty.partyName || myParty.name),
-
-                                                  /* 2. Trocar aqui: Condição para cor Slate (outras parties) */
-                                                  'text-slate-400 border-slate-400 bg-rpg-darker border-solid': u.partyName && u.partyName !== 'Lone Wolf' && (!myParty || u.partyName !== (myParty.partyName || myParty.name))}"
+                                                  'text-slate-400 border-slate-400 bg-rpg-darker border-solid': u.partyName && u.partyName !== 'Lone Wolf' && (!myParty || u.partyName !== (myParty.partyName || u.partyName !== (myParty.partyName || myParty.name)))}"
                                                   x-text="u.partyName || 'Lone Wolf'">
                                             </span>
                                         </div>
@@ -791,6 +799,80 @@
         </div>
     </template>
 </main>
+
+<div x-show="showEditModal" x-cloak
+     class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+    <div class="pixel-card p-6 w-full max-w-md bg-rpg-dark">
+        <h3 class="text-sm mb-4 text-rpg-goldLight flex items-center gap-2">
+            <span>⚒️</span> Edit Quest
+        </h3>
+
+        <div class="bg-rpg-red/10 border border-rpg-red/50 p-2 mb-4">
+            <p class="text-[8px] text-rpg-red uppercase">Rejection Comment:</p>
+            <p class="text-[10px] text-white italic" x-text="editForm.feedback"></p>
+        </div>
+
+        <form @submit.prevent="updateQuest()" class="space-y-4">
+            <div>
+                <label class="block text-xs mb-2 text-rpg-gold">Quest Title</label>
+                <input type="text" x-model="editForm.title" required
+                       class="pixel-input w-full p-3 text-xs focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-xs mb-2 text-rpg-gold">Description</label>
+                <textarea x-model="editForm.description" rows="3" required
+                          class="pixel-input w-full p-3 text-xs focus:outline-none resize-none"></textarea>
+            </div>
+            <div>
+                <label class="block text-xs mb-2 text-rpg-gold">Rarity</label>
+                <select x-model="editForm.rarity"
+                        class="pixel-input w-full p-3 text-xs focus:outline-none">
+                    <option value="COMMON">COMMON</option>
+                    <option value="RARE">RARE</option>
+                    <option value="EPIC">EPIC</option>
+                    <option value="LEGENDARY">LEGENDARY</option>
+                </select>
+            </div>
+
+            <div class="flex gap-2 pt-4">
+                <button type="submit"
+                        class="pixel-btn flex-1 bg-rpg-green text-white py-2 text-xs">
+                    SAVE CHANGES
+                </button>
+                <button type="button" @click="showEditModal = false"
+                        class="pixel-btn flex-1 bg-rpg-gray py-2 text-xs">
+                    CANCEL
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div x-show="showReviewModal" x-cloak
+     class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+    <div class="pixel-card p-6 w-full max-w-md bg-rpg-dark">
+        <h3 class="text-sm mb-4 text-rpg-purple flex items-center gap-2">
+            <span>⚖️</span> Reviewing: <span x-text="reviewTarget?.title"></span>
+        </h3>
+
+        <div>
+            <label class="block text-xs mb-2">Feedback to Adventurer</label>
+            <textarea x-model="reviewForm.feedback" placeholder="Why are you rejecting or approving?"
+                      class="pixel-input w-full p-3 text-xs focus:outline-none resize-none h-24 mb-4"></textarea>
+        </div>
+
+        <div class="flex gap-2">
+            <button @click="submitReview(true)"
+                    class="pixel-btn flex-1 bg-rpg-green text-white py-2 text-xs">
+                ✓ APPROVE
+            </button>
+            <button @click="submitReview(false)"
+                    class="pixel-btn flex-1 bg-rpg-red text-white py-2 text-xs">
+                ✗ REJECT
+            </button>
+        </div>
+    </div>
+</div>
 
 <footer class="text-center p-4 text-xs text-rpg-gray mt-8">
     <p>⚔️ My Party Quests v0.1 ⚔️</p>

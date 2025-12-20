@@ -27,7 +27,6 @@ public class QuestService {
     private UserRepository userRepository;
 
     public Quest createQuest(CreateQuestDTO data, User adventurer) {
-
         Party currentParty = adventurer.getCurrentParty();
 
         if (adventurer.getCurrentParty() == null) {
@@ -48,6 +47,7 @@ public class QuestService {
         quest.setAdventurer(adventurer);
         quest.setParty(adventurer.getCurrentParty());
 
+        // Cálculo de recompensas original
         int goldAmount = switch (data.rarity()) {
             case COMMON -> 5;
             case RARE -> 10;
@@ -79,7 +79,6 @@ public class QuestService {
         }
 
         quest.setStatus(QuestStatus.PENDING_APPROVAL);
-
         return questRepository.save(quest);
     }
 
@@ -102,6 +101,47 @@ public class QuestService {
         }
 
         quest.setReviewerFeedback(data.feedback());
+        return questRepository.save(quest);
+    }
+
+    @Transactional
+    public Quest updateQuest(Long questId, CreateQuestDTO data, User loggedUser) {
+        Quest quest = questRepository.findById(questId)
+                .orElseThrow(() -> new RuntimeException("Quest not found."));
+
+        if (!quest.getAdventurer().getId().equals(loggedUser.getId())) {
+            throw new RuntimeException("You can only edit your own quests.");
+        }
+
+        if (quest.getParty().getPartyStatus() != PartyStatus.PLANNING) {
+            throw new RuntimeException("Quests can only be edited during PLANNING phase.");
+        }
+
+        // Atualização dos campos básicos
+        quest.setTitle(data.title());
+        quest.setDescription(data.description());
+        quest.setRarity(data.rarity());
+
+        // Recalcula recompensas se a raridade mudou na edição
+        int goldAmount = switch (data.rarity()) {
+            case COMMON -> 5;
+            case RARE -> 10;
+            case EPIC -> 15;
+            case LEGENDARY -> 20;
+        };
+        quest.setGoldReward(goldAmount);
+
+        int xpAmount = switch (data.rarity()) {
+            case COMMON -> 50;
+            case RARE -> 150;
+            case EPIC -> 500;
+            case LEGENDARY -> 1500;
+        };
+        quest.setXpReward(xpAmount);
+
+        // Destrava o fluxo: volta para pendente e limpa o feedback antigo
+        quest.setStatus(QuestStatus.PENDING_APPROVAL);
+        quest.setReviewerFeedback(null);
 
         return questRepository.save(quest);
     }
@@ -119,7 +159,6 @@ public class QuestService {
         }
 
         quest.setStatus(QuestStatus.COMPLETED);
-
         return questRepository.save(quest);
     }
 
@@ -127,55 +166,20 @@ public class QuestService {
         return questRepository.findAll();
     }
 
+    public Quest findById(Long id) {
+        return questRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Quest not found with id: " + id));
+    }
+
     public List<QuestResponseDTO> getMyQuests(User user) {
-        if (user.getCurrentParty() == null) {
-            return List.of();
-        }
-
-        List<Quest> quests = questRepository.findByPartyIdAndAdventurerId(
-                user.getCurrentParty().getId(),
-                user.getId()
-        );
-
-        return quests.stream()
-                .map(QuestResponseDTO::new)
-                .toList();
+        if (user.getCurrentParty() == null) return List.of();
+        List<Quest> quests = questRepository.findByPartyIdAndAdventurerId(user.getCurrentParty().getId(), user.getId());
+        return quests.stream().map(QuestResponseDTO::new).toList();
     }
 
     public List<QuestResponseDTO> getQuestsToReview(User user) {
         if (user.getCurrentParty() == null) return List.of();
-
-        List<Quest> quests = questRepository.findByPartyIdAndReviewerIdAndStatus(
-                user.getCurrentParty().getId(),
-                user.getId(),
-                QuestStatus.PENDING_APPROVAL
-        );
-
+        List<Quest> quests = questRepository.findByPartyIdAndReviewerIdAndStatus(user.getCurrentParty().getId(), user.getId(), QuestStatus.PENDING_APPROVAL);
         return quests.stream().map(QuestResponseDTO::new).toList();
     }
-
-    @Transactional
-    public Quest updateQuest(Long questId, CreateQuestDTO data, User loggedUser) {
-        Quest quest = questRepository.findById(questId)
-                .orElseThrow(() -> new RuntimeException("Quest not found."));
-
-        if (!quest.getAdventurer().getId().equals(loggedUser.getId())) {
-            throw new RuntimeException("You can only edit your own quests.");
-        }
-
-        if (quest.getParty().getPartyStatus() != PartyStatus.PLANNING) {
-            throw new RuntimeException("Quests can only be edited during PLANNING phase.");
-        }
-
-        // Updates
-        quest.setTitle(data.title());
-        quest.setDescription(data.description());
-        quest.setRarity(data.rarity());
-
-        // Set status to pending
-        quest.setStatus(QuestStatus.PENDING_APPROVAL);
-
-        return questRepository.save(quest);
-    }
-
 }

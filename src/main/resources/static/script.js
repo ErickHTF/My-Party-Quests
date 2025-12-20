@@ -13,6 +13,13 @@ function questParty() {
         currentHeaderImage: 0,
         headerInterval: null,
 
+        // MODAIS DE EDIÇÃO E REVISÃO (ADICIONE ESTAS 5 LINHAS)
+        showEditModal: false,
+        showReviewModal: false,
+        reviewTarget: null,
+        editForm: { id: null, title: '', description: '', rarity: 'COMMON', feedback: '' },
+        reviewForm: { feedback: '' },
+
         // Listas de dados
         myQuestsList: [],
         reviewQuestsList: [],
@@ -153,6 +160,10 @@ function questParty() {
                 (p.owner && p.owner.id === this.user.id) ||
                 (p.members && p.members.some(m => m.id === this.user.id))
             );
+
+            const found = this.parties.find(p => p.members?.some(m => m.id === this.user?.id));
+            // Retorna um objeto "vazio" se for null para não dar erro de 'status'
+            return found || { status: 'LOBBY', partyStatus: 'LOBBY', name: '', description: '', members: [] };
         },
 
         // --- INICIALIZAÇÃO ---
@@ -477,24 +488,100 @@ function questParty() {
                         goldReward: this.currentReward
                     })
                 });
+
+
                 this.showToast(`Quest posted! (${this.currentReward} G)`, 'success');
                 this.questForm.title = '';
                 this.questForm.description = '';
                 await this.loadMySpecificQuests();
                 await this.loadReviewQuests();
             } catch (err) { this.showToast(err.message, 'error'); }
+
+
+        },
+
+        // ABRE O MODAL DE EDIÇÃO
+        openEditQuest(quest) {
+            this.editForm = { id: quest.id, title: quest.title, description: quest.description, rarity: quest.rarity, feedback: quest.reviewerFeedback || 'Corrija os detalhes.' };
+            this.showEditModal = true;
+        },
+
+        // SALVA A EDIÇÃO (PUT)
+        async updateQuest() {
+            try {
+                await this.api(`/quests/${this.editForm.id}`, { method: 'PUT', body: JSON.stringify({ title: this.editForm.title, description: this.editForm.description, rarity: this.editForm.rarity }) });
+                this.showToast('Quest corrigida!', 'success');
+                this.showEditModal = false;
+                this.loadData();
+            } catch (err) { this.showToast(err.message, 'error'); }
+        },
+
+        // ABRE O MODAL DE JULGAMENTO
+        openReviewModal(quest) {
+            this.reviewTarget = quest;
+            this.reviewForm.feedback = '';
+            this.showReviewModal = true;
+        },
+
+        // ENVIA O JULGAMENTO (SUBSTITUI O ANTIGO REVIEWQUEST)
+        async submitReview(approved) {
+            try {
+                await this.api(`/quests/${this.reviewTarget.id}/review`, { method: 'POST', body: JSON.stringify({ approved, feedback: this.reviewForm.feedback || 'Processado' }) });
+                this.showToast(approved ? 'Aprovado!' : 'Rejeitado!', 'info');
+                this.showReviewModal = false;
+                this.loadData();
+            } catch (err) { this.showToast(err.message, 'error'); }
+        },
+
+        openEditQuest(quest) {
+            this.editForm = {
+                id: quest.id,
+                title: quest.title,
+                description: quest.description,
+                rarity: quest.rarity,
+                feedback: quest.reviewerFeedback || 'Corrija os detalhes da quest.'
+            };
+            this.showEditModal = true;
+        },
+
+// Função para enviar a correção ao banco
+        async updateQuest() {
+            try {
+                await this.api(`/quests/${this.editForm.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        title: this.editForm.title,
+                        description: this.editForm.description,
+                        rarity: this.editForm.rarity
+                    })
+                });
+                this.showToast('Quest enviada para nova revisão!', 'success');
+                this.showEditModal = false;
+                this.loadData(); // Isso faz a quest "sumir" da lista de erros e voltar para o revisor
+            } catch (err) {
+                this.showToast(err.message, 'error');
+            }
         },
 
         async reviewQuest(id, approved) {
             try {
+                // Agora enviamos um objeto completo, como o seu ReviewQuestDTO espera
                 await this.api(`/quests/${id}/review`, {
                     method: 'POST',
-                    body: JSON.stringify({ approved, feedback: approved ? 'Approved' : 'Rejected' })
+                    body: JSON.stringify({
+                        approved: approved,
+                        feedback: approved ? 'Quest aprovada pelo revisor!' : 'Quest rejeitada. Por favor, corrija os detalhes.'
+                    })
                 });
-                this.showToast(approved ? 'Approved!' : 'Rejected.', approved ? 'success' : 'info');
+
+                this.showToast(approved ? 'Quest Aprovada!' : 'Quest Rejeitada!', 'info');
+
+                // Recarrega as listas para a quest sumir da sua aba de "Review"
                 await this.loadReviewQuests();
                 await this.loadMySpecificQuests();
-            } catch (err) { this.showToast(err.message, 'error'); }
+            } catch (err) {
+                this.showToast('Erro ao julgar: ' + err.message, 'error');
+            }
         },
 
         async completeQuest(id) {
