@@ -133,7 +133,7 @@ public class User implements UserDetails {
         return true;
     }
 
-    //de para das minhas roles para as roles do Spring Security
+    //from my roles to the Spring Security roles
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (this.role == UserRole.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));

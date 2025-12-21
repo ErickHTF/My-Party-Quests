@@ -8,7 +8,7 @@ public record UserResponseDTO(
         Integer xp,
         Integer level,
         Integer nextLevelXp,
-        Integer progressPercentagem,
+        Integer progressPercentage,
         String partyName
 )
 {

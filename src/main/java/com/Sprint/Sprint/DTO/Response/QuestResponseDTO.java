@@ -11,7 +11,7 @@ public record QuestResponseDTO(
         QuestRarity rarity,
         Integer goldReward,
         QuestStatus status,
-        String adventurerName,
+        String ownerName,
         String reviewerName,
         String reviewerFeedback
 ) {
@@ -23,7 +23,7 @@ public record QuestResponseDTO(
                 quest.getRarity(),
                 quest.getGoldReward(),
                 quest.getStatus(),
-                quest.getAdventurer().getNickname(),
+                quest.getAdventurer().getNickname() != null ? quest.getAdventurer().getNickname() : "Unknown",
                 quest.getReviewer() != null ? quest.getReviewer().getNickname() : null,
                 quest.getReviewerFeedback()
         );

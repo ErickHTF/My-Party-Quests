@@ -36,10 +36,10 @@ public class PartyService {
     public Party createParty(CreatePartyDTO data, User loggedUser) {
         Party party = new Party();
 
-        // Validates previous party binding: blocks leaders from abandoning the group without disbanding it and removes common members from the old party
+        // Validates previous party binding: blocks owner from abandoning the group without disbanding it and removes common members from the old party
         if (loggedUser.getCurrentParty() != null) {
             if (loggedUser.getCurrentParty().getOwner().getId().equals(loggedUser.getId())) {
-                throw new RuntimeException("You are the LEADER of an active party. Disband it before creating a new one.");
+                throw new RuntimeException("You are the OWNER of an active party. Disband it before creating a new one.");
             }
             loggedUser.getCurrentParty().getMembers().remove(loggedUser);
             partyRepository.save(loggedUser.getCurrentParty());
@@ -75,10 +75,10 @@ public class PartyService {
         Party party = partyRepository.findById(partyId)
                 .orElseThrow(() -> new RuntimeException("Party not found"));
 
-        // Validates previous affiliation: prevents leaders from leaving the group without disbanding it and removes common members from the old party.
+        // Validates previous affiliation: prevents OWNER from leaving the group without disbanding it and removes common members from the old party.
         if (user.getCurrentParty() != null) {
             if (user.getCurrentParty().getOwner().getId().equals(user.getId())) {
-                throw new RuntimeException("You are the LEADER of your current party. You must Disband it before joining another.");
+                throw new RuntimeException("You are the OWNER of your current party. You must Disband it before joining another.");
             }
             user.getCurrentParty().getMembers().remove(user);
             partyRepository.save(user.getCurrentParty());
@@ -231,14 +231,14 @@ public class PartyService {
         List<Quest> partyQuests = questRepository.findByParty(party);
 
         if (partyQuests.isEmpty()) {
-            throw new RuntimeException("Cannot start Sprint without quests.");
+            throw new RuntimeException("Cannot start the adventure without quests.");
         }
 
         boolean hasPendingIssues = partyQuests.stream()
                 .anyMatch(q -> q.getStatus() != QuestStatus.APPROVED);
 
         if (hasPendingIssues) {
-            throw new RuntimeException("Cannot start Sprint! All quests must be APPROVED first.");
+            throw new RuntimeException("Cannot start the adventure! All quests must be APPROVED first.");
         }
 
         party.setPartyStatus(PartyStatus.EXECUTION);
@@ -298,6 +298,27 @@ public class PartyService {
         party.setPartyStatus(PartyStatus.LOBBY);
         questRepository.deleteByParty(party);
 
+        return partyRepository.save(party);
+    }
+
+    @Transactional
+    public Party kickMember(Long partyId, Long userIdToKick, User requester) {
+        Party party = partyRepository.findById(partyId)
+                .orElseThrow(() -> new RuntimeException("Party not found"));
+
+        // Segurança: Só o dono pode expulsar
+        if (!party.getOwner().getId().equals(requester.getId())) {
+            throw new RuntimeException("Only the owner can kick members!");
+        }
+
+        User memberToKick = userRepository.findById(userIdToKick)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Remove da lista
+        party.getMembers().remove(memberToKick);
+        memberToKick.setCurrentParty(null); // Desvincula no lado do User (JPA)
+
+        userRepository.save(memberToKick);
         return partyRepository.save(party);
     }
 

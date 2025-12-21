@@ -20,6 +20,8 @@ public interface QuestRepository extends JpaRepository<Quest, Long> {
 
     List<Quest> findByPartyIdAndReviewerIdAndStatus(Long partyId, Long reviewerId, QuestStatus status);
 
+    List<Quest> findByPartyIdAndStatus(Long partyId, QuestStatus status);
+
     @Modifying
     void deleteByParty(Party party);
 }

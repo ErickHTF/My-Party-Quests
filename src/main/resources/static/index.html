@@ -80,22 +80,22 @@
             color: #f0d78c;
         }
 
-        /* --- ESTILOS DO NOVO STEPPER --- */
+        /* --- ESTILOS DO STEPPER --- */
         .stepper-container {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background-color: #0f0d0a; /* rpg-darker */
-            border: 4px solid #5c4d3d; /* rpg-border */
+            background-color: #0f0d0a;
+            border: 4px solid #5c4d3d;
             padding: 0 10px;
-            height: 46px; /* Mesma altura aproximada dos inputs */
-            color: #f0d78c; /* rpg-goldLight */
+            height: 46px;
+            color: #f0d78c;
         }
 
         .stepper-btn {
             background: none;
             border: none;
-            color: #d4a84b; /* rpg-gold */
+            color: #d4a84b;
             font-size: 1.2rem;
             cursor: pointer;
             font-weight: bold;
@@ -148,15 +148,21 @@
 
 <body class="min-h-screen text-rpg-gold font-pixel bg-rpg-darker" x-data="questParty()" x-init="init()">
 
-<div class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none">
+<div class="fixed top-4 right-4 z-[100] space-y-2 pointer-events-none">
     <template x-for="toast in toasts" :key="toast.id">
-        <div class="toast pixel-border p-4 max-w-xs pointer-events-auto shadow-lg bg-rpg-dark"
+        <div class="toast pixel-border p-3 max-w-xs pointer-events-auto shadow-lg bg-rpg-dark flex gap-3 justify-between items-start transition-all duration-300"
              :class="{
-             'border-rpg-green text-rpg-green': toast.type === 'success',
-             'border-rpg-red text-rpg-red': toast.type === 'error',
-             'border-rpg-blue text-rpg-blue': toast.type === 'info'
-           }">
-            <p class="text-xs" x-text="toast.message"></p>
+                 'border-rpg-green text-rpg-green': toast.type === 'success',
+                 'border-rpg-red text-rpg-red': toast.type === 'error',
+                 'border-rpg-blue text-rpg-blue': toast.type === 'info'
+               }">
+
+            <p class="text-[10px] leading-tight pt-0.5" x-text="toast.message"></p>
+
+            <button @click="removeToast(toast.id)"
+                    class="text-[10px] font-bold hover:text-white hover:scale-125 transition-transform cursor-pointer border-none bg-transparent px-1">
+                ✕
+            </button>
         </div>
     </template>
 </div>
@@ -173,7 +179,7 @@
     <div class="container mx-auto relative z-10">
         <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
             <h1 class="text-xs md:text-lg text-rpg-goldLight flex items-center gap-2 drop-shadow-[0_2px_0_rgba(0,0,0,1)]">
-                <span>⚔️</span> My Party Quests
+                 My Party Quests
             </h1>
 
             <template x-if="user">
@@ -191,9 +197,10 @@
 
         <template x-if="user">
             <nav class="flex flex-wrap gap-2 justify-center md:justify-start border-t border-rpg-border/50 pt-4 backdrop-blur-[2px]">
+
                 <button @click="currentView = 'tavern'"
                         class="pixel-btn px-3 py-2 text-[10px] shadow-md"
-                        :class="currentView === 'tavern' ? 'bg-rpg-gold text-rpg-dark' : 'bg-rpg-gray text-gray-400'">
+                        :class="currentView === 'tavern' ? 'bg-rpg-gold text-rpg-dark' : 'bg-rpg-gray text-gray-200 border-gray-600'">
                     🍺 TAVERN
                 </button>
 
@@ -202,7 +209,7 @@
                         :disabled="!myParty"
                         :class="{
                             'bg-rpg-gold text-rpg-dark': currentView === 'quests',
-                            'bg-rpg-gray text-gray-400': currentView !== 'quests',
+                            'bg-rpg-gray text-gray-200 border-gray-600': currentView !== 'quests',
                             'opacity-50 cursor-not-allowed grayscale': !myParty,
                             'quest-unlock-anim': myParty
                         }">
@@ -211,7 +218,7 @@
 
                 <button @click="currentView = 'users'"
                         class="pixel-btn px-3 py-2 text-[10px] shadow-md"
-                        :class="currentView === 'users' ? 'bg-rpg-gold text-rpg-dark' : 'bg-rpg-gray text-gray-400'">
+                        :class="currentView === 'users' ? 'bg-rpg-gold text-rpg-dark' : 'bg-rpg-gray text-gray-200 border-gray-600'">
                     📜 GUILD
                 </button>
             </nav>
@@ -295,23 +302,33 @@
                         <div>
                             <h3 class="text-sm text-rpg-goldLight mb-1">
                                 <span x-text="user.nickname || user.username"></span>
-                                <span class="text-[8px] text-rpg-gray" x-text="'(Lvl ' + userLevel + ')'"></span>
+                                <span class="text-[8px] text-gray-200 font-bold" x-text="'(Lvl ' + userLevel + ')'"></span>
                             </h3>
-                            <div class="flex gap-4 text-[10px]">
-                                <span class="text-yellow-400">💰 <span x-text="user.gold || 0"></span> G</span>
-                                <span class="text-rpg-blue" x-show="pendingRewards > 0" x-transition>
-                                    (+<span x-text="pendingRewards"></span> G Pending)
+                            <div class="flex gap-4 text-[10px] items-center">
+                                <span class="text-yellow-400"> <span class="text-[15px]"> 💰 </span> <span x-text="user.gold || 0"></span> Gold</span>
+
+                                <span class="text-yellow-500" x-show="pendingRewardsGold > 0" x-transition>
+                                    (+<span x-text="pendingRewardsGold"></span> G Pending)
+                                </span>
+
+                                <span class="text-gray-400" x-show="pendingXp > 0" x-transition>
+                                    (+<span x-text="pendingXp"></span> XP Pending)
                                 </span>
                             </div>
                         </div>
-                        <div class="text-[8px] text-rpg-gray">
-                            <span x-text="user.xp || 0"></span> / <span x-text="nextLevelXp"></span> XP
+
+                        <div class="text-[8px] text-gray-300">
+                            <span x-text="user.xp || 0"></span> / <span x-text="nextLevelXp"></span> <span class="text-[10px]">XP </span>
                         </div>
                     </div>
 
-                    <div class="w-full h-3 bg-rpg-darker border-2 border-rpg-border relative">
-                        <div class="h-full bg-rpg-purple transition-all duration-1000"
-                             :style="'width: ' + xpPercentage + '%'"></div>
+                    <div class="w-full h-3 bg-black border-2 border-rpg-border relative overflow-hidden">
+
+                        <div class="absolute h-full bg-white/30 transition-all duration-1000 z-0"
+                             :style="'width: ' + projectedXpPercentage + '%'"></div>
+
+                        <div class="absolute h-full bg-cyan-600 transition-all duration-1000 z-10"
+                             :style="'width: ' + (user.progressPercentage || 0) + '%'"></div>
                     </div>
                 </div>
 
@@ -320,38 +337,47 @@
 
                         <div class="flex justify-between items-start mb-2">
                             <h3 class="text-sm text-rpg-blue flex items-center gap-2">
-                                <span>🛡️</span> <span x-text="myParty.partyName || myParty.name"></span>
+                                <span x-text="myParty.partyName || myParty.name"></span>
                             </h3>
-                            <span class="text-[9px] px-2 py-1 bg-rpg-darker border border-rpg-gray text-rpg-gray">
+                            <span class="text-[9px] px-2 py-1 bg-rpg-darker border border-rpg-gray text-gray-300">
                                 <span x-text="myParty.members ? myParty.members.length : 0"></span>/<span x-text="myParty.maxMembers || 10"></span>
                             </span>
                         </div>
 
-                        <p class="text-xs text-rpg-gray mb-4" x-text="myParty.partyDescription || myParty.description"></p>
+                        <p class="text-xs text-gray-400 mb-4" x-text="myParty.partyDescription || myParty.description"></p>
 
-                        <div class="mb-4">
-                            <span class="text-xs text-rpg-blue">Status: </span>
-                            <span class="text-xs uppercase bg-black px-1 text-white"
-                                  x-text="myParty.status || myParty.partyStatus || 'LOBBY'"></span>
-                        </div>
+
 
                         <div class="mb-4">
                             <h4 class="text-[10px] text-rpg-gray mb-2">ADVENTURERS</h4>
-                            <div class="flex flex-wrap gap-2">
-                                <template x-if="myParty.owner">
-                                    <span class="pixel-border bg-rpg-darker px-2 py-1 text-xs flex items-center gap-1 border-rpg-blue text-rpg-blue">
-                                        <span>👑</span>
-                                        <span x-text="myParty.owner.nickname || myParty.owner.username"></span>
-                                    </span>
-                                </template>
 
+                            <div class="flex flex-wrap gap-2">
                                 <template x-if="myParty.members && myParty.members.length > 0">
-                                    <template x-for="m in myParty.members" :key="m.id">
-                                        <span x-show="!myParty.owner || m.id !== myParty.owner.id"
-                                              class="pixel-border bg-rpg-darker px-2 py-1 text-xs flex items-center gap-1 text-rpg-gray">
-                                            <span x-text="m.nickname || m.username"></span>
-                                        </span>
+
+                                    <template x-for="m in sortedMembers" :key="m.id">
+
+                                        <div class="pixel-border px-2 py-1 text-xs flex items-center gap-2 transition-colors hover:bg-black group"
+                                             :class="(myParty.owner && m.id === myParty.owner.id)
+                                                ? 'bg-rpg-darker border-rpg-blue text-rpg-blue shadow-[0_0_5px_rgba(74,124,199,0.3)]'
+                                                : 'bg-rpg-darker text-gray-300'">
+
+                                            <template x-if="myParty.owner && m.id === myParty.owner.id">
+                                                <span>👑</span>
+                                            </template>
+
+                                            <span x-text="m.nickname || m.username"
+                                                  :class="(myParty.owner && m.id === myParty.owner.id) ? 'font-bold' : ''"></span>
+
+                                            <button x-show="isPartyOwner && (!myParty.owner || m.id !== myParty.owner.id)"
+                                                    @click="kickMember(m.id, m.nickname || m.username)"
+                                                    class="pixel-btn bg-rpg-red text-white w-6 h-6 flex items-center justify-center border border-white ml-2 shadow-[2px_2px_0px_#000] hover:scale-110 active:scale-95 transition-transform"
+                                                    title="Banir Membro">
+                                                🥾
+                                            </button>
+
+                                        </div>
                                     </template>
+
                                 </template>
                             </div>
                         </div>
@@ -362,7 +388,7 @@
                             <h4 class="text-[10px] text-yellow-400 mb-2 blink">⚠️ PENDING JOIN REQUESTS</h4>
 
                             <div class="flex flex-col gap-2">
-                                <template x-for="req in myParty.pendingMembers.filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i)" :key="req.id">
+                                <template x-for="req in uniquePendingMembers" :key="req.id">
                                     <div class="flex justify-between items-center bg-gray-900 p-2 border border-rpg-border shadow-md">
                                         <div class="flex flex-col">
                                             <span class="text-xs text-white font-bold" x-text="req.nickname || req.username"></span>
@@ -381,39 +407,159 @@
                             </div>
                         </div>
 
-                        <div class="flex gap-2 flex-wrap">
-                            <template x-if="isPartyOwner">
-                                <div class="flex gap-2">
-                                    <button x-show="['LOBBY', null, undefined].includes(myParty.status || myParty.partyStatus)"
-                                            @click="startPlanning()" class="pixel-btn bg-rpg-blue text-white px-3 py-2 text-xs">📝 PLANNING</button>
+                        <div class="flex flex-col gap-3 mt-6 pt-4 border-t-2 border-dashed border-rpg-gray/50">
 
-                                    <button x-show="(myParty.status || myParty.partyStatus) === 'PLANNING'"
-                                            @click="startExecution()" class="pixel-btn bg-rpg-green text-white px-3 py-2 text-xs">⚔️ ADVENTURE</button>
+                            <div class="flex justify-between items-end pl-1">
+                                <template x-if="isPartyOwner">
+                                    <h4 class="text-[8px] text-rpg-gold uppercase tracking-widest font-bold flex items-center gap-1">
+                                        <span>👑</span> LEADER DASHBOARD
+                                    </h4>
+                                </template>
+                                <template x-if="!isPartyOwner">
+                                    <h4 class="text-[8px] text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                                        <span>⏳</span> WAITING FOR LEADER...
+                                    </h4>
+                                </template>
+                            </div>
 
-                                    <button x-show="(myParty.status || myParty.partyStatus) === 'EXECUTION'"
-                                            @click="startReviewPhase()" class="pixel-btn bg-rpg-purple text-white px-3 py-2 text-xs">🏁 FINISH QUESTS</button>
+                            <div>
 
-                                    <button x-show="(myParty.status || myParty.partyStatus) === 'REVIEW'"
-                                            @click="resetLobby()" class="pixel-btn bg-rpg-gold text-rpg-dark px-3 py-2 text-xs">🔄 NEW SPRINT</button>
+                                <template x-if="isPartyOwner">
+                                    <div>
+                                        <div x-show="['LOBBY', null, undefined].includes(myParty.partyStatus)"
+                                             class="pixel-border p-3 bg-black/40 flex flex-wrap items-center gap-4 border-l-4 border-l-rpg-blue mb-2">
+                                            <div class="flex flex-col">
+                                                <span class="text-[10px] text-rpg-blue font-bold uppercase">Step 1:</span>
+                                                <p class="text-[8px] text-gray-400">Everyone here?</p>
+                                            </div>
+                                            <button @click="startPlanning()" class="pixel-btn bg-rpg-blue text-white px-3 py-2 text-[10px] shadow-[2px_2px_0px_#000] hover:translate-y-[-1px] active:translate-y-[1px] transition-all flex items-center gap-2">
+                                                <span>Start to Plan</span> <span class="text-[8px]">▶</span>
+                                            </button>
+                                            <button @click="disbandParty()" class="ml-auto pixel-btn bg-rpg-dark border border-rpg-red text-rpg-red px-3 py-2 text-[10px] shadow-[2px_2px_0px_#000] hover:bg-rpg-red hover:text-white active:translate-y-[1px] transition-all flex items-center gap-1">
+                                                <span>💀</span> DISBAND
+                                            </button>
+                                        </div>
 
-                                    <button @click="disbandParty()" class="pixel-btn bg-rpg-red text-white px-3 py-2 text-xs">💀 DISBAND</button>
-                                </div>
-                            </template>
-                            <button x-show="!isPartyOwner && (myParty.status === 'LOBBY' || myParty.partyStatus === 'LOBBY')"
-                                    @click="leaveParty()"
-                                    class="pixel-btn bg-rpg-red text-white px-3 py-2 text-xs">
-                                🚪 LEAVE
-                            </button>
+                                        <div x-show="myParty.partyStatus === 'PLANNING'"
+                                             class="pixel-border p-3 bg-black/40 flex flex-wrap items-center gap-4 border-l-4 border-l-rpg-green mb-2">
+                                            <div class="flex flex-col">
+                                                <span class="text-[10px] text-rpg-green font-bold uppercase">Step 2:</span>
+                                                <p class="text-[8px] text-gray-400">Quests approved?</p>
+                                            </div>
+                                            <button @click="startExecution()" class="pixel-btn bg-rpg-green text-white px-3 py-2 text-[10px] shadow-[2px_2px_0px_#000] hover:translate-y-[-1px] active:translate-y-[1px] transition-all flex items-center gap-2">
+                                                <span>ADVENTURE</span> <span class="text-[8px]">▶</span>
+                                            </button>
+                                            <button @click="disbandParty()" class="ml-auto pixel-btn bg-rpg-dark border border-rpg-red text-rpg-red px-3 py-2 text-[10px] shadow-[2px_2px_0px_#000] hover:bg-rpg-red hover:text-white active:translate-y-[1px] transition-all flex items-center gap-1">
+                                                <span>💀</span> DISBAND
+                                            </button>
+                                        </div>
+
+                                        <div x-show="myParty.partyStatus === 'EXECUTION'"
+                                             class="pixel-border p-3 bg-black/40 flex flex-wrap items-center gap-4 border-l-4 border-l-rpg-purple mb-2">
+                                            <div class="flex flex-col">
+                                                <span class="text-[10px] text-rpg-purple font-bold uppercase">Step 3:</span>
+                                                <p class="text-[8px] text-gray-400">Work done?</p>
+                                            </div>
+                                            <button @click="startReviewPhase()" class="pixel-btn bg-rpg-purple text-white px-3 py-2 text-[10px] shadow-[2px_2px_0px_#000] hover:translate-y-[-1px] active:translate-y-[1px] transition-all flex items-center gap-2">
+                                                <span>PAY REWARDS</span> <span class="text-[8px]">▶</span>
+                                            </button>
+                                            <button @click="disbandParty()" class="ml-auto pixel-btn bg-rpg-dark border border-rpg-red text-rpg-red px-3 py-2 text-[10px] shadow-[2px_2px_0px_#000] hover:bg-rpg-red hover:text-white active:translate-y-[1px] transition-all flex items-center gap-1">
+                                                <span>💀</span> DISBAND
+                                            </button>
+                                        </div>
+
+                                        <div x-show="myParty.partyStatus === 'REVIEW'"
+                                             class="pixel-border p-3 bg-black/40 flex flex-wrap items-center gap-4 border-l-4 border-l-rpg-gold mb-2">
+                                            <div class="flex flex-col">
+                                                <span class="text-[10px] text-rpg-gold font-bold uppercase">Step 4:</span>
+                                                <p class="text-[8px] text-gray-400">All done?</p>
+                                            </div>
+                                            <button @click="resetLobby()" class="pixel-btn bg-rpg-gold text-rpg-dark px-3 py-2 text-[10px] shadow-[2px_2px_0px_#000] hover:translate-y-[-1px] active:translate-y-[1px] transition-all flex items-center gap-2">
+                                                <span>RETURN</span> <span class="text-[8px]">▶</span>
+                                            </button>
+                                            <button @click="disbandParty()" class="ml-auto pixel-btn bg-rpg-dark border border-rpg-red text-rpg-red px-3 py-2 text-[10px] shadow-[2px_2px_0px_#000] hover:bg-rpg-red hover:text-white active:translate-y-[1px] transition-all flex items-center gap-1">
+                                                <span>💀</span> DISBAND
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <template x-if="!isPartyOwner">
+                                    <div class="pixel-border p-3 bg-black/20 border-gray-700 flex items-center gap-3">
+
+                                        <div class="w-2 h-2 rounded-full bg-yellow-500 animate-ping"></div>
+
+                                        <p class="text-[9px] text-gray-400 italic">
+                                            Waiting for
+                                            <span class="text-rpg-gold font-bold"
+                                                  x-text="myParty.owner ? (myParty.owner.nickname || myParty.owner.username) : 'Leader'">
+                                            </span>...
+                                        </p>
+
+                                        <button @click="leaveParty()" class="ml-auto pixel-btn bg-rpg-dark border border-rpg-red text-rpg-red px-3 py-2 text-[10px] shadow-[2px_2px_0px_#000] hover:bg-rpg-red hover:text-white active:translate-y-[1px] transition-all flex items-center gap-1">
+                                            <span>🚪</span> LEAVE
+                                        </button>
+                                    </div>
+                                </template>
+
+                            </div>
                         </div>
+                            </div>
+
+                        </div>
+
                     </div>
                 </template>
 
-                <div x-show="myParty && (myParty.status === 'LOBBY' || myParty.partyStatus === 'LOBBY')"
-                     class="mb-6 border-2 border-rpg-gold bg-rpg-darker p-2 text-center shadow-sm">
-                    <p class="text-[10px] text-rpg-gold">
-                        The party is currently in the LOBBY phase. Prepare for the adventure.
-                    </p>
-                </div>
+                <template x-if="myParty">
+                    <div class="grid grid-cols-4 gap-2 mb-6 select-none w-full">
+
+                        <div class="pixel-border p-2 text-center transition-all duration-300 flex flex-col justify-center items-center h-full relative"
+                             :class="(myParty.partyStatus === 'LOBBY' || !myParty.partyStatus)
+                     ? 'border-rpg-gold bg-rpg-gold/20 shadow-[0_0_10px_rgba(212,168,75,0.5)] border-4'
+                     : 'border-gray-800 bg-black/50 opacity-40 grayscale border-2'">
+                            <span class="text-xs md:text-lg mb-1">🍺</span>
+                            <p class="text-[6px] md:text-[8px] font-bold"
+                               :class="(myParty.partyStatus === 'LOBBY' || !myParty.partyStatus) ? 'text-rpg-gold' : 'text-gray-600'">
+                                LOBBY
+                            </p>
+                        </div>
+
+                        <div class="pixel-border p-2 text-center transition-all duration-300 flex flex-col justify-center items-center h-full relative"
+                             :class="(myParty.partyStatus === 'PLANNING')
+                     ? 'border-rpg-blue bg-rpg-blue/20 shadow-[0_0_10px_rgba(74,124,199,0.5)] border-4'
+                     : 'border-gray-800 bg-black/50 opacity-40 grayscale border-2'">
+                            <span class="text-xs md:text-lg mb-1">📜</span>
+                            <p class="text-[6px] md:text-[8px] font-bold"
+                               :class="(myParty.partyStatus === 'PLANNING') ? 'text-rpg-blue' : 'text-gray-600'">
+                                PLAN
+                            </p>
+                        </div>
+
+                        <div class="pixel-border p-2 text-center transition-all duration-300 flex flex-col justify-center items-center h-full relative"
+                             :class="(myParty.partyStatus === 'EXECUTION')
+                     ? 'border-rpg-green bg-rpg-green/20 shadow-[0_0_10px_rgba(74,156,74,0.5)] border-4'
+                     : 'border-gray-800 bg-black/50 opacity-40 grayscale border-2'">
+                            <span class="text-xs md:text-lg mb-1">⚔️</span>
+                            <p class="text-[6px] md:text-[8px] font-bold"
+                               :class="(myParty.partyStatus === 'EXECUTION') ? 'text-rpg-green' : 'text-gray-600'">
+                                QUEST
+                            </p>
+                        </div>
+
+                        <div class="pixel-border p-2 text-center transition-all duration-300 flex flex-col justify-center items-center h-full relative"
+                             :class="(myParty.partyStatus === 'REVIEW')
+                     ? 'border-rpg-purple bg-rpg-purple/20 shadow-[0_0_10px_rgba(139,92,246,0.5)] border-4'
+                     : 'border-gray-800 bg-black/50 opacity-40 grayscale border-2'">
+                            <span class="text-xs md:text-lg mb-1">💎</span>
+                            <p class="text-[6px] md:text-[8px] font-bold"
+                               :class="(myParty.partyStatus === 'REVIEW') ? 'text-rpg-purple' : 'text-gray-600'">
+                                LOOT
+                            </p>
+                        </div>
+
+                    </div>
+                </template>
 
                 <div class="pixel-card p-4">
 
@@ -446,18 +592,19 @@
                                 <div>
                                     <div class="flex justify-between items-start mb-2">
                                         <h4 class="text-xs font-bold truncate pr-2 text-rpg-blue" x-text="party.partyName || party.name"></h4>
-                                        <span x-show="party.isPrivate || party.private" class="text-[10px]" title="Private">🔒</span>
+                                        <span x-show="party.isPrivate || party.private" class="text-[15px]" title="Private">🔒</span>
                                         <span x-show="!(party.isPrivate || party.private)" class="text-[10px]" title="Public">🌍</span>
                                     </div>
-                                    <p class="text-[10px] text-rpg-gray mb-2 line-clamp-2" x-text="party.partyDescription || party.description"></p>
+                                    <p class="text-[10px] text-gray-400 mb-2 line-clamp-2" x-text="party.partyDescription || party.description"></p>
 
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-[8px] px-1 text-white bg-rpg-blue border border-rpg-blue"
-                                              x-text="party.status || party.partyStatus || 'LOBBY'"></span>
-
-                                        <span class="text-[8px] text-rpg-gray"
-                                              x-text="(party.members ? party.members.length : 0) + '/' + (party.maxMembers || 10)"></span>
-                                    </div>
+                                    <span class="text-[10px] font-bold"
+                                          :class="{
+                                              'text-rpg-blue': (party.status === 'LOBBY'),
+                                              'text-rpg-green': (party.status === 'EXECUTION'),
+                                              'text-rpg-purple': (party.status === 'REVIEW'),
+                                              'text-yellow-400': (party.status === 'PLANNING')
+                                          }"
+                                          x-text="getPartyStatusLabel(party.status || party.partyStatus || 'LOBBY')"></span>
                                 </div>
                                 <div class="mt-4">
                                     <button class="pixel-btn w-full py-2 text-[10px] text-white transition-transform active:scale-95 bg-rpg-blue hover:bg-rpg-gold hover:text-rpg-dark cursor-default">
@@ -486,18 +633,24 @@
                                         <span x-show="party.isPrivate || party.private" class="text-[10px]" title="Private">🔒</span>
                                         <span x-show="!(party.isPrivate || party.private)" class="text-[10px]" title="Public">🌍</span>
                                     </div>
-                                    <p class="text-[10px] text-rpg-gray mb-2 line-clamp-2" x-text="party.partyDescription || party.description"></p>
+                                    <p class="text-[10px] text-gray-400 mb-2 line-clamp-2" x-text="party.partyDescription || party.description"></p>
 
                                     <div class="flex justify-between items-center">
-                                        <span class="text-[8px] px-1 text-white border"
+                                        <span class="text-[10px] font-bold"
                                               :class="{
-                                                  'bg-rpg-red border-rpg-red': (party.isPrivate || party.private),
-                                                  'bg-gray-700 border-gray-600': !(party.isPrivate || party.private)
+                                                  'text-rpg-blue': (party.status === 'LOBBY'),
+                                                  'text-rpg-green': (party.status === 'EXECUTION'),
+                                                  'text-rpg-purple': (party.status === 'REVIEW'),
+                                                  'text-yellow-400': (party.status === 'PLANNING')
                                               }"
-                                              x-text="party.status || party.partyStatus || 'LOBBY'"></span>
+                                              x-text="getPartyStatusLabel(party.status || party.partyStatus || 'LOBBY')"></span>
 
-                                        <span class="text-[8px] font-bold flex items-center gap-1"
-                                              :class="(party.members && party.members.length >= (party.maxMembers || 10)) ? 'text-rpg-red' : 'text-rpg-gray'">
+                                        <span class="text-[8px] font-bold flex items-center gap-1 transition-colors duration-300"
+                                              :class="{
+                                              'text-rpg-red blink': (party.members && party.members.length >= (party.maxMembers || 10)),
+                                              'text-rpg-gold': (party.members && party.members.length === (party.maxMembers || 10) - 1),
+                                              'text-gray-400': (party.members && party.members.length < (party.maxMembers || 10) - 1)
+                                          }">
                                             <span>👥</span>
                                             <span x-text="(party.members ? party.members.length : 0) + '/' + (party.maxMembers || 10)"></span>
                                         </span>
@@ -599,6 +752,55 @@
 
             <div x-show="currentView === 'quests' && myParty" class="space-y-6">
 
+                <template x-if="isPartyOwner && partyPendingQuests.length > 0">
+                    <div class="pixel-card p-4 border-2 border-dashed border-rpg-gold bg-rpg-gold/10 shadow-[0_0_15px_rgba(212,168,75,0.2)] animate-pulse">
+
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-xs text-yellow-400 font-bold blink flex items-center gap-2">
+                                ⚠️ GUILD MASTER ALERT: STUCK QUESTS
+                            </h4>
+                            <button @click="fetchPartyPendingQuests()" class="text-[8px] text-rpg-gold hover:text-white underline">
+                                ↻ REFRESH LOG
+                            </button>
+                        </div>
+
+                        <p class="text-[8px] text-rpg-gold mb-3 opacity-80">
+                            The following quests are pending approval. Ping the reviewer to unblock the party! All quests need to be approved before we can proceed.
+                        </p>
+
+                        <div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-2">
+                            <template x-for="pq in partyPendingQuests" :key="pq.id">
+                                <div class="flex flex-col md:flex-row justify-between items-center bg-rpg-darker p-2 border border-rpg-border shadow-sm">
+
+                                    <div class="flex items-center gap-3 w-full md:w-auto">
+                                        <span class="text-lg">📜</span>
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] font-bold"
+                                                  :class="{
+                                                    'text-gray-400': pq.rarity === 'COMMON',
+                                                    'text-rpg-blue': pq.rarity === 'RARE',
+                                                    'text-rpg-purple': pq.rarity === 'EPIC',
+                                                    'text-rpg-gold': pq.rarity === 'LEGENDARY'
+                                                  }"
+                                                  x-text="pq.title"></span>
+                                            <span class="text-[8px] text-rpg-gray">
+                                                By: <span class="text-white" x-text="pq.ownerName || 'Unknown'"></span>
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-2 md:mt-0 flex items-center gap-2 bg-black/50 px-2 py-1 border border-rpg-border">
+                                        <span class="text-[8px] text-rpg-gray uppercase">Waiting on:</span>
+                                        <span class="text-[9px] text-rpg-purple font-bold flex items-center gap-1">
+                                            ⚖️ <span x-text="pq.reviewerName || 'Anyone'"></span>
+                                        </span>
+                                    </div>
+
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
                 <div class="pixel-card p-4" x-show="(myParty.status || myParty.partyStatus) === 'PLANNING'">
                     <h3 class="text-sm mb-4 text-rpg-goldLight">📜 Post New Quest</h3>
                     <form @submit.prevent="createQuest()" class="space-y-4">
@@ -609,9 +811,13 @@
                                        class="pixel-input w-full p-3 text-xs focus:outline-none">
                             </div>
                             <div>
-                                <label class="block text-xs mb-2">
-                                    Rarity
-                                    <span class="text-yellow-400 ml-2" x-text="'(💰 ' + currentReward + ' Gold)'"></span>
+                                <label class="block text-xs mb-2 flex justify-between items-end">
+                                    <span>Rarity</span>
+                                    <div class="text-[9px]">
+                                        <span class="text-yellow-400 font-bold" x-text="'💰 ' + currentGoldReward + ' G'"></span>
+                                        <span class="text-rpg-gray mx-1">|</span>
+                                        <span class="text-rpg-purple font-bold" x-text="'✨ ' + currentXpReward + ' XP'"></span>
+                                    </div>
                                 </label>
 
                                 <select x-model="questForm.rarity"
@@ -645,7 +851,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                     <div class="space-y-4">
-                        <h3 class="text-xs text-rpg-goldLight flex items-center gap-2">⚔️ My Tasks</h3>
+                        <h3 class="text-xs text-rpg-goldLight flex items-center gap-2">⚔️ My Quests</h3>
 
                         <div class="space-y-4">
                             <template x-for="q in myQuestsList" :key="q.id">
@@ -720,6 +926,11 @@
                                         'border-rpg-gold': q.rarity === 'LEGENDARY'
                                      }">
 
+                                    <div class="flex items-center gap-2 mb-2 border-b border-gray-700 pb-2">
+                                        <span class="text-[9px] text-rpg-gray">Adventurer:</span>
+                                        <span class="text-[10px] text-white font-bold" x-text="q.ownerName || 'Unknown'"></span>
+                                    </div>
+
                                     <h4 class="text-xs mb-2"
                                         :class="{
                                             'text-gray-400': q.rarity === 'COMMON',
@@ -742,7 +953,7 @@
             </div>
 
             <div x-show="currentView === 'quests' && !myParty" class="pixel-card p-8 text-center mt-6">
-                <p class="text-rpg-red mb-4">🚫 ACESSO NEGADO</p>
+                <p class="text-rpg-red mb-4">ACESSO NEGADO</p>
                 <p class="text-xs text-rpg-gray">Você precisa estar em uma guilda para acessar o mural de missões.</p>
                 <button @click="currentView = 'tavern'" class="pixel-btn bg-rpg-gold text-rpg-dark px-4 py-2 text-[10px] mt-4">
                     VOLTAR PARA A TAVERNA
@@ -768,8 +979,6 @@
                                     <td class="p-2">
                                         <div class="flex flex-col">
                                             <span class="text-rpg-goldLight" x-text="u.nickname"></span>
-                                            <span class="text-[10px] text-rpg-gray" x-text="'@' + u.username"></span>
-
                                             <span class="text-[9px] mt-1 px-1 py-0.5 w-fit border"
                                                   :class="{
                                                   'text-rpg-gray border-rpg-gray border-dashed': !u.partyName || u.partyName === 'Lone Wolf',
@@ -780,7 +989,7 @@
                                         </div>
                                     </td>
                                     <td class="p-2">
-                                        <span class="text-rpg-purple font-bold" x-text="'Lvl ' + (u.level || 1)"></span>
+                                        <span class="text-rpg-purple font-bold" x-text="'Level ' + (u.level || 1)"></span>
                                         <span class="text-[8px] text-rpg-gray block" x-text="(u.xp || 0) + ' XP'"></span>
                                     </td>
                                     <td class="p-2 text-yellow-400" x-text="'💰 ' + (u.gold || 0)"></td>
@@ -874,8 +1083,29 @@
     </div>
 </div>
 
+<div x-show="showConfirmModal" x-cloak
+     class="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4">
+    <div class="pixel-card p-6 w-full max-w-sm bg-rpg-darker border-2 border-rpg-red shadow-[0_0_20px_rgba(199,62,62,0.4)] text-center">
+
+        <h3 class="text-sm mb-4 text-rpg-red blink">⚠️ WAIT, ADVENTURER! ⚠️</h3>
+
+        <p class="text-xs text-gray-300 mb-6 leading-relaxed" x-text="confirmMessage"></p>
+
+        <div class="flex gap-4 justify-center">
+            <button @click="showConfirmModal = false"
+                    class="pixel-btn bg-gray-700 text-white px-4 py-2 text-xs hover:bg-gray-600">
+                CANCEL
+            </button>
+            <button @click="executeConfirmedAction()"
+                    class="pixel-btn bg-rpg-red text-white px-4 py-2 text-xs hover:scale-105">
+                CONFIRM
+            </button>
+        </div>
+    </div>
+</div>
+
 <footer class="text-center p-4 text-xs text-rpg-gray mt-8">
-    <p>⚔️ My Party Quests v0.1 ⚔️</p>
+    <p>⚔️ My Party Quests v1.0 ⚔️</p>
     <p class="mt-1">Press START to begin your adventure</p>
 </footer>
 

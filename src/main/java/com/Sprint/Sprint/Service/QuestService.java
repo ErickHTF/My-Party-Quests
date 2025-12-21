@@ -182,4 +182,23 @@ public class QuestService {
         List<Quest> quests = questRepository.findByPartyIdAndReviewerIdAndStatus(user.getCurrentParty().getId(), user.getId(), QuestStatus.PENDING_APPROVAL);
         return quests.stream().map(QuestResponseDTO::new).toList();
     }
+
+    public List<QuestResponseDTO> getPartyPendingQuests(User user) {
+        Party party = user.getCurrentParty();
+
+        // 1. Verifica se está em party
+        if (party == null) {
+            throw new RuntimeException("You must be in a party.");
+        }
+
+        // 2. Verifica se é o dono (segurança extra, caso a annotation @PreAuthorize não seja usada)
+        if (!party.getOwner().getId().equals(user.getId())) {
+            throw new RuntimeException("Only the Party Owner can view pending quests logs.");
+        }
+
+        // 3. Busca todas as quests pendentes daquela party (independente de quem é o reviewer)
+        List<Quest> pendingQuests = questRepository.findByPartyIdAndStatus(party.getId(), QuestStatus.PENDING_APPROVAL);
+
+        return pendingQuests.stream().map(QuestResponseDTO::new).toList();
+    }
 }

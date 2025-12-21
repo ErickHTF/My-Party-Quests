@@ -187,6 +187,8 @@ public class PartyController {
     @PostMapping("/{id}/start-review")
     public ResponseEntity<PartyResponseDTO> startReview(@PathVariable Long id,
                                                         @AuthenticationPrincipal User user) {
+
+
         return ResponseEntity.ok(new PartyResponseDTO(partyService.startReviewPhase(id, user)));
     }
 
@@ -196,5 +198,27 @@ public class PartyController {
     public ResponseEntity<PartyResponseDTO> resetLobby(@PathVariable Long id,
                                                        @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(new PartyResponseDTO(partyService.resetToLobby(id, user)));
+    }
+
+    @Operation(
+            summary = "Kick a member from the Party",
+            description = "Removes a specific member from the party. Only the owner can perform this action."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Member kicked successfully",
+                    content = @Content(schema = @Schema(implementation = PartyResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "403", description = "Only the owner can kick members"),
+            @ApiResponse(responseCode = "404", description = "Party or User not found")
+    })
+    @PostMapping("/{partyId}/kick/{userId}")
+    public ResponseEntity<PartyResponseDTO> kickMember(@PathVariable Long partyId,
+                                                       @PathVariable Long userId,
+                                                       @AuthenticationPrincipal User loggedUser) {
+
+        Party updatedParty = partyService.kickMember(partyId, userId, loggedUser);
+        return ResponseEntity.ok(new PartyResponseDTO(updatedParty));
     }
 }

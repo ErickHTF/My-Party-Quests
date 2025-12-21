@@ -163,4 +163,22 @@ public class QuestController {
         Quest quest = questService.findById(id);
         return ResponseEntity.ok(new QuestResponseDTO(quest));
     }
+
+    @Operation(
+            summary = "Get Party Pending Quests (Owner Only)",
+            description = "Returns all quests with status PENDING_APPROVAL for the party owned by the authenticated user. Used for the Guild Master Log."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of pending quests returned successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = QuestResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "403", description = "User is not a party owner"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping("/party-pending")
+    public ResponseEntity<List<QuestResponseDTO>> getPartyPendingQuests(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(questService.getPartyPendingQuests(user));
+    }
 }
