@@ -1,6 +1,6 @@
 package com.Sprint.Sprint.Controller;
 
-import com.Sprint.Sprint.Entity.User;
+import com.Sprint.Sprint.DTO.Response.UserResponseDTO;
 import com.Sprint.Sprint.Service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/user")
 public class UserController {
 
     @Autowired
@@ -28,22 +28,20 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping(value = "/all")
-    public List<User> getAllUsers() {
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
 
-        return userService.findAllUsers();
+        return ResponseEntity.ok(userService.findAllUsers());
     }
 
-    @Operation(summary = "Create User",
-            description = "Cria um novo usuário.")
-    @PostMapping
-    public ResponseEntity<User> saveUser(@RequestBody User user) {
-        User userSaved = userService.createUser(user);
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> getCurrentUser() {
+        UserResponseDTO userDTO = userService.getMe();
 
-        return ResponseEntity.status(201).body(userSaved);
+        return ResponseEntity.ok(userDTO);
     }
 
     @Operation(summary = "Delete User",
-            description = "Remove um novo usuário.")
+            description = "Delete a existent user.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Usuário removido com sucesso"),
             @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
