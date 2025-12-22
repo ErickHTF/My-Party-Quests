@@ -91,6 +91,10 @@ public class PartyService {
             throw new RuntimeException("Party is full! Max: " + party.getMaxMembers());
         }
 
+        if (party.getPartyStatus() != PartyStatus.LOBBY) {
+            throw new RuntimeException("Entry is not possible: the adventure is in progress or nearing completion.");
+        }
+
         // Public/Private logic
         if (party.isPrivate()) {
             party.getPendingMembers().add(user);
