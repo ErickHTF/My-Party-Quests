@@ -242,14 +242,9 @@ Main API domains:
 
 ---
 
-##  Project Status
+## Project Status
 
-The project is **actively evolving** and intended for learning, experimentation, and portfolio demonstration.
+**MVP Completed (v1.0)**
+All core features are implemented and the project is stable for portfolio demonstration.
 
-Planned improvements:
-
-* Automated tests
-* UI animations and polish
-* Quest statistics & dashboards
-* CI/CD pipeline
 
