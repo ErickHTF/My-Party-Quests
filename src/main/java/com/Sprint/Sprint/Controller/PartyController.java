@@ -128,7 +128,7 @@ public class PartyController {
             @ApiResponse(
                     responseCode = "200",
                     description = "Member approved successfully",
-                    content = @Content // Sem conteúdo pois retorna void
+                    content = @Content
             ),
             @ApiResponse(responseCode = "404", description = "Party or User not found", content = @Content),
             @ApiResponse(responseCode = "400", description = "Party is full or User is not in pending list", content = @Content)
@@ -144,7 +144,7 @@ public class PartyController {
             @ApiResponse(
                     responseCode = "200",
                     description = "Member request rejected successfully",
-                    content = @Content // Sem conteúdo pois retorna void
+                    content = @Content
             ),
             @ApiResponse(responseCode = "404", description = "Party or User not found", content = @Content)
     })

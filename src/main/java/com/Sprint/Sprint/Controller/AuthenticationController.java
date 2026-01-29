@@ -49,7 +49,6 @@ public class AuthenticationController {
         return ResponseEntity.status(201).body(userSaved);
     }
 
-    //criptografa e armazena senha recebida por parametro e compara com hash do BD
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody @Valid AuthenticationDTO data){
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.username(), data.password());

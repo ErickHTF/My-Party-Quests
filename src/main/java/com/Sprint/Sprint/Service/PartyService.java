@@ -13,13 +13,11 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Random;
 
 @Service
 public class PartyService {
@@ -35,8 +33,6 @@ public class PartyService {
 
     public Party createParty(CreatePartyDTO data, User loggedUser) {
         Party party = new Party();
-
-        // Validates previous party binding: blocks owner from abandoning the group without disbanding it and removes common members from the old party
         if (loggedUser.getCurrentParty() != null) {
             if (loggedUser.getCurrentParty().getOwner().getId().equals(loggedUser.getId())) {
                 throw new RuntimeException("You are the OWNER of an active party. Disband it before creating a new one.");
@@ -44,20 +40,13 @@ public class PartyService {
             loggedUser.getCurrentParty().getMembers().remove(loggedUser);
             partyRepository.save(loggedUser.getCurrentParty());
         }
-
-        // Set data BEFORE saving to avoid null errors or saving empty objects
         boolean isPrivate = data.isPrivate() != null ? data.isPrivate() : false;
         int maxMembers = data.maxMembers() != null ? data.maxMembers() : 10;
-
-        // Populating the party object
         party.setPartyName(data.partyName());
         party.setPartyDescription(data.partyDescription());
         party.setPrivate(isPrivate);
         party.setMaxMembers(maxMembers);
         party.setOwner(loggedUser);
-
-
-        // Try to save the populated object
         try {
             partyRepository.save(party);
 
@@ -74,8 +63,6 @@ public class PartyService {
 
         Party party = partyRepository.findById(partyId)
                 .orElseThrow(() -> new RuntimeException("Party not found"));
-
-        // Validates previous affiliation: prevents OWNER from leaving the group without disbanding it and removes common members from the old party.
         if (user.getCurrentParty() != null) {
             if (user.getCurrentParty().getOwner().getId().equals(user.getId())) {
                 throw new RuntimeException("You are the OWNER of your current party. You must Disband it before joining another.");
@@ -94,8 +81,6 @@ public class PartyService {
         if (party.getPartyStatus() != PartyStatus.LOBBY) {
             throw new RuntimeException("Entry is not possible: the adventure is in progress or nearing completion.");
         }
-
-        // Public/Private logic
         if (party.isPrivate()) {
             party.getPendingMembers().add(user);
             partyRepository.save(party);
@@ -112,8 +97,6 @@ public class PartyService {
     public void approveRequest(Long partyId, Long userId) {
         Party party = partyRepository.findById(partyId).orElseThrow();
         User user = userRepository.findById(userId).orElseThrow();
-
-        // Validates the candidate's current state: blocks approval if the user is leading another party (to prevent orphan groups) and automatically removes them from their previous party if they are just a member
         if (user.getCurrentParty() != null) {
             if (user.getCurrentParty().getOwner().getId().equals(user.getId())) {
                 throw new RuntimeException("Cannot approve: The user is currently leading another party.");
@@ -178,9 +161,7 @@ public class PartyService {
         List<User> members = userRepository.findAll()
                 .stream()
                 .filter(u ->
-                        //ignore users with no party
                         u.getCurrentParty() != null &&
-                                //get this party
                                 u.getCurrentParty().getId().equals(id)
                 )
                 .toList();
@@ -264,7 +245,6 @@ public class PartyService {
 
         List<Quest> partyQuests = questRepository.findByPartyId(partyId);
 
-        //Iterates through quests to process approved payouts and increment the adventurer's completed quests counter
         for (Quest quest : partyQuests) {
             if (quest.getStatus() == QuestStatus.COMPLETED && !quest.isRewardClaimed()) {
 
@@ -309,18 +289,14 @@ public class PartyService {
     public Party kickMember(Long partyId, Long userIdToKick, User requester) {
         Party party = partyRepository.findById(partyId)
                 .orElseThrow(() -> new RuntimeException("Party not found"));
-
-        // Segurança: Só o dono pode expulsar
         if (!party.getOwner().getId().equals(requester.getId())) {
             throw new RuntimeException("Only the owner can kick members!");
         }
 
         User memberToKick = userRepository.findById(userIdToKick)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Remove da lista
         party.getMembers().remove(memberToKick);
-        memberToKick.setCurrentParty(null); // Desvincula no lado do User (JPA)
+        memberToKick.setCurrentParty(null);
 
         userRepository.save(memberToKick);
         return partyRepository.save(party);

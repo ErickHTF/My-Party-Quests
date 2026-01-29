@@ -34,10 +34,10 @@ public class User implements UserDetails {
     private UserRole role;
 
     @Column(nullable = false)
-    private Integer gold = 0; // 0 by default
+    private Integer gold = 0;
 
     @Column(nullable = false)
-    private Integer xp = 0; // 0 by default
+    private Integer xp = 0;
 
     @Column(columnDefinition = "integer default 0")
     private Integer questsCompleted = 0;
@@ -133,7 +133,6 @@ public class User implements UserDetails {
         return true;
     }
 
-    //from my roles to the Spring Security roles
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (this.role == UserRole.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));

@@ -21,21 +21,15 @@ public class LevelProgressionService {
 
         int currentLevel = calculateLevel(totalXp);
         int nextLevel = currentLevel + 1;
-
-        // XP where the current level started "floor"
         int xpFloor = (int) (Math.pow(currentLevel - 1, 2) * DIFFICULTY_FACTOR);
-
-        // XP where the next level begins "ceiling"
         int xpCeiling = (int) (Math.pow(currentLevel, 2) * DIFFICULTY_FACTOR);
 
-        int range = xpCeiling - xpFloor; // Level Size
-        int progress = totalXp - xpFloor; // Progress
+        int range = xpCeiling - xpFloor;
+        int progress = totalXp - xpFloor;
 
         if (range == 0) return 100;
 
         int percentage = (progress * 100) / range;
-
-        // Locked between 0 and 100 to prevent visual bugs
         return Math.min(100, Math.max(0, percentage));
     }
 }

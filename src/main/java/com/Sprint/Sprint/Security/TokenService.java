@@ -40,7 +40,6 @@ public class TokenService {
                     .verify(token)
                     .getSubject();
         }catch (JWTCreationException exception){
-            //Spring Security retorna unauthorized
             return "";
         }
     }

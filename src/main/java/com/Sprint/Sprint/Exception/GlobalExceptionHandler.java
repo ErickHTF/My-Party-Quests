@@ -30,7 +30,6 @@ public class GlobalExceptionHandler {
                 exception.getMessage(),
                 request.getDescription(false));
 
-        // Retorna erro 500 (INTERNAL_SERVER_ERROR) porque foi algo inesperado
         return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

@@ -26,13 +26,13 @@ public class Party {
     private User owner;
 
     @Enumerated(EnumType.STRING)
-    private PartyStatus partyStatus = PartyStatus.LOBBY; // Standard open
+    private PartyStatus partyStatus = PartyStatus.LOBBY;
 
     @OneToMany(mappedBy = "currentParty", fetch = FetchType.EAGER)
     private java.util.List<User> members;
 
     @Column(columnDefinition = "boolean default false")
-    private boolean isPrivate = false; // Standard public
+    private boolean isPrivate = false;
 
     @ManyToMany
     @JoinTable(
@@ -43,7 +43,7 @@ public class Party {
 
     private List<User> pendingMembers = new ArrayList<>();
 
-    private Integer maxMembers = 8; // Standard 8
+    private Integer maxMembers = 8;
 
     private LocalDateTime currentPhaseExpiration;
 

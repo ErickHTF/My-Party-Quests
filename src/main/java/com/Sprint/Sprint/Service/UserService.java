@@ -27,7 +27,7 @@ public class UserService {
     public List<UserResponseDTO> findAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(this::convertToDTO) // Agora isso vai funcionar porque o método existe lá embaixo
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
@@ -41,7 +41,6 @@ public class UserService {
             throw new RuntimeException("User not found");
         }
 
-        // Reutilizamos a lógica aqui para ficar limpo
         return convertToDTO(user);
     }
 

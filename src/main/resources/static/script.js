@@ -2,7 +2,7 @@ const API_BASE = 'http://localhost:8080';
 
 function questParty() {
     return {
-        // --- STATE ---
+
         user: null,
         token: null,
         loading: false,
@@ -14,34 +14,25 @@ function questParty() {
         currentHeaderImage: 0,
         headerInterval: null,
 
-        // MODAIS
         showEditModal: false,
         showReviewModal: false,
         reviewTarget: null,
-        showConfirmModal: false, // Controla se o modal aparece
-        confirmMessage: '',      // O texto da pergunta
-        pendingAction: null,     // Guarda a função que vai rodar se clicar em "SIM"
+        showConfirmModal: false,
+        confirmMessage: '',
+        pendingAction: null,     
         editForm: { id: null, title: '', description: '', rarity: 'COMMON', feedback: '' },
         reviewForm: { feedback: '' },
-
-        // DADOS
         myQuestsList: [],
         reviewQuestsList: [],
         partyPendingQuests: [],
         parties: [],
         users: [],
-
-        // NAV
         currentView: 'tavern',
         authMode: 'login',
         showCreateParty: false,
-
-        // FORMS
         authForm: { username: '', password: '', nickname: '' },
         partyForm: { name: '', description: '', isPrivate: false, maxMembers: 10 },
         questForm: { title: '', description: '', rarity: 'COMMON' },
-
-        // CONFIGS DE RECOMPENSA (Visual apenas, o real é no Java)
         rewardsMap: {
             'COMMON':    { gold: 5,  xp: 50 },
             'RARE':      { gold: 10, xp: 150 },
@@ -58,68 +49,45 @@ function questParty() {
 
         askConfirm(message, actionCallback) {
             this.confirmMessage = message;
-            this.pendingAction = actionCallback; // Guarda a função para depois
-            this.showConfirmModal = true;        // Abre o modal
+            this.pendingAction = actionCallback;
+            this.showConfirmModal = true;
         },
 
         executeConfirmedAction() {
             if (this.pendingAction) {
-                this.pendingAction(); // Executa a função guardada
+                this.pendingAction();
             }
-            this.showConfirmModal = false; // Fecha o modal
-            this.pendingAction = null;     // Limpa a ação
+            this.showConfirmModal = false;
+            this.pendingAction = null;
         },
-
-        // --- COMPUTED PROPERTIES (Lógica Visual) ---
 
         getPartyStatusLabel(status) {
             return this.statusLabels[status] || status || 'Unknown';
         },
-
-        // Helpers para formulário
         get currentGoldReward() { return this.rewardsMap[this.questForm.rarity]?.gold || 0; },
         get currentXpReward() { return this.rewardsMap[this.questForm.rarity]?.xp || 0; },
-
-        // Dados do Usuário
         get userLevel() { return (this.user && this.user.level) ? this.user.level : 1; },
         get nextLevelXp() { return (this.user && this.user.nextLevelXp) ? this.user.nextLevelXp : 100; },
-
-        // Porcentagem REAL (Vem do Backend)
         get xpPercentage() {
             return (this.user && this.user.progressPercentage) ? this.user.progressPercentage : 0;
         },
-
-        // XP PENDENTE (Soma visual do que vai entrar)
         get pendingXp() {
             if (!this.myQuestsList || this.myQuestsList.length === 0) return 0;
             return this.myQuestsList
-                // Filtra quests que já foram aprovadas ou completadas mas ainda não pagas
                 .filter(q => (q.status === 'APPROVED' || q.status === 'COMPLETED') && !q.rewardClaimed)
                 .reduce((total, q) => total + (this.rewardsMap[q.rarity]?.xp || 0), 0);
         },
-
-        // GOLD PENDENTE
         get pendingRewardsGold() {
             if (!this.myQuestsList || this.myQuestsList.length === 0) return 0;
             return this.myQuestsList
                 .filter(q => (q.status === 'APPROVED' || q.status === 'COMPLETED') && !q.rewardClaimed)
                 .reduce((total, q) => total + (this.rewardsMap[q.rarity]?.gold || 0), 0);
         },
-
-        // GHOST BAR (Projeção Visual na Barra)
         get projectedXpPercentage() {
             if (!this.user || !this.user.nextLevelXp) return 0;
-
-            // 1. Quanto falta de XP real para upar?
             const xpNeeded = this.user.nextLevelXp - (this.user.xp || 0);
-
-            // Se já tiver XP suficiente para upar, enche a barra visualmente
             if (xpNeeded <= 0) return 100;
-
-            // 2. Quanto espaço visual (em %) está vazio na barra?
             const emptySpace = 100 - this.xpPercentage;
-
-            // 3. Regra de 3: Quanto a pendência preenche do espaço vazio?
             const visualGain = (this.pendingXp / xpNeeded) * emptySpace;
 
             return Math.min(100, this.xpPercentage + visualGain);
@@ -148,8 +116,6 @@ function questParty() {
                 return !isDuplicate;
             });
         },
-
-        // --- CORE ---
         init() {
             const savedToken = localStorage.getItem('quest_token');
             try {
@@ -167,8 +133,6 @@ function questParty() {
             }
 
             this.startHeaderRotation();
-
-            // Polling Lento (Listas Globais - 2s)
             setInterval(() => {
                 if (this.token) {
                     this.loadParties();
@@ -178,18 +142,11 @@ function questParty() {
 
             setInterval(() => {
                 if (this.token && this.user) {
-                    // 1. Dados do Usuário (XP, Gold, Level)
                     this.loadMe();
-
-                    // 2. Dados da Party (Para mudar de fase PLANNING -> EXECUTION sozinho)
                     this.loadParties();
-
-                    // 3. Listas de Quests (Para aparecerem sem F5)
                     this.loadMySpecificQuests();
-                    this.loadReviewQuests();       // <--- FALTAVA ISSO AQUI
+                    this.loadReviewQuests();
                     this.fetchPartyPendingQuests();
-
-                    // 4. Guilda (Ranking)
                     this.loadUsers();
                 }
             }, 1000);
@@ -206,8 +163,6 @@ function questParty() {
             if (!this.user || !party || !party.pendingMembers) return false;
             return party.pendingMembers.some(m => m.id === this.user.id);
         },
-
-        // --- API CALLS ---
         async api(endpoint, options = {}) {
             const headers = {
                 'Content-Type': 'application/json',
@@ -233,8 +188,6 @@ function questParty() {
                 throw err;
             }
         },
-
-        // --- AUTH ---
         async login() {
             this.loading = true;
             try {
@@ -279,8 +232,6 @@ function questParty() {
             localStorage.removeItem('quest_user');
             this.showToast('Farewell!', 'info');
         },
-
-        // --- LOADS ---
         async loadData() {
             await Promise.all([
                 this.loadParties(),
@@ -311,7 +262,6 @@ function questParty() {
         async loadUsers() {
             try {
                 const users = await this.api('/user/all');
-                // ORDENAÇÃO DE GUILDA: Maior Nível primeiro, depois Maior XP
                 this.users = users.sort((a, b) => {
                     if ((b.level || 1) !== (a.level || 1)) {
                         return (b.level || 1) - (a.level || 1);
@@ -325,8 +275,6 @@ function questParty() {
             if (!this.user || !this.isPartyOwner) return;
             try { this.partyPendingQuests = await this.api('/quests/party-pending'); } catch (e) { }
         },
-
-        // --- GAME ACTIONS ---
         async createParty() {
             if (!this.partyForm.name) { this.showToast('Name required', 'error'); return; }
             try {
@@ -507,8 +455,6 @@ function questParty() {
             this.askConfirm(`Kick ${memberName}? They will be kicked immediately.`, async () => {
                 try {
                     await this.api(`/parties/${this.myParty.id}/kick/${memberId}`, { method: 'POST' });
-
-                    // --- MUDANÇA AQUI: O '0' no final torna a mensagem persistente ---
                     this.showToast(` ${memberName} has been kicked from the party!`, 'success', 0);
 
                     await this.loadParties();
@@ -521,10 +467,8 @@ function questParty() {
 
 
         showToast(message, type = 'info', duration = 3000) {
-            const id = Date.now() + Math.random(); // ID único
+            const id = Date.now() + Math.random();
             this.toasts.push({ id, message, type });
-
-            // Só configura o sumiço automático se a duração for maior que 0
             if (duration > 0) {
                 setTimeout(() => {
                     this.removeToast(id);
@@ -547,7 +491,7 @@ function questParty() {
                 return unique.sort((a, b) => {
                     if (a.id === this.myParty.owner.id) return -1;
                     if (b.id === this.myParty.owner.id) return 1;
-                    return 0; // Mantém a ordem dos outros
+                    return 0;
                 });
             }
 

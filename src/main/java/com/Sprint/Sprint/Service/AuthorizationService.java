@@ -17,14 +17,11 @@ public class AuthorizationService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         UserDetails user = userRepository.findByUsername(username);
 
-        // 2. A CORREÇÃO: Se o banco devolver null, você É OBRIGADO a lançar esse erro
         if (user == null) {
             throw new UsernameNotFoundException("Usuário não encontrado");
         }
 
-        // 3. Se achou, retorna o usuário
         return user;
 
-        //return userRepository.findByUsername(username);
     }
 }

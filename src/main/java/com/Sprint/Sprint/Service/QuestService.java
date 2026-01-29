@@ -37,32 +37,10 @@ public class QuestService {
             throw new RuntimeException("You can only create quests during the PLANNING phase.");
         }
 
-        //mounting object
         Quest quest = new Quest();
         quest.setTitle(data.title());
         quest.setDescription(data.description());
         quest.setRarity(data.rarity());
-
-        //linking object (quest) with current party
-        quest.setAdventurer(adventurer);
-        quest.setParty(adventurer.getCurrentParty());
-
-        // Cálculo de recompensas original
-        int goldAmount = switch (data.rarity()) {
-            case COMMON -> 5;
-            case RARE -> 10;
-            case EPIC -> 15;
-            case LEGENDARY -> 20;
-        };
-        quest.setGoldReward(goldAmount);
-
-        int xpAmount = switch (data.rarity()) {
-            case COMMON -> 50;
-            case RARE -> 150;
-            case EPIC -> 500;
-            case LEGENDARY -> 1500;
-        };
-        quest.setXpReward(xpAmount);
 
         List<User> members = userRepository.findByCurrentParty(currentParty);
         Random random = new Random();
@@ -116,13 +94,9 @@ public class QuestService {
         if (quest.getParty().getPartyStatus() != PartyStatus.PLANNING) {
             throw new RuntimeException("Quests can only be edited during PLANNING phase.");
         }
-
-        // Atualização dos campos básicos
         quest.setTitle(data.title());
         quest.setDescription(data.description());
         quest.setRarity(data.rarity());
-
-        // Recalcula recompensas se a raridade mudou na edição
         int goldAmount = switch (data.rarity()) {
             case COMMON -> 5;
             case RARE -> 10;
@@ -138,8 +112,6 @@ public class QuestService {
             case LEGENDARY -> 1500;
         };
         quest.setXpReward(xpAmount);
-
-        // Destrava o fluxo: volta para pendente e limpa o feedback antigo
         quest.setStatus(QuestStatus.PENDING_APPROVAL);
         quest.setReviewerFeedback(null);
 
@@ -185,18 +157,12 @@ public class QuestService {
 
     public List<QuestResponseDTO> getPartyPendingQuests(User user) {
         Party party = user.getCurrentParty();
-
-        // 1. Verifica se está em party
         if (party == null) {
             throw new RuntimeException("You must be in a party.");
         }
-
-        // 2. Verifica se é o dono (segurança extra, caso a annotation @PreAuthorize não seja usada)
         if (!party.getOwner().getId().equals(user.getId())) {
             throw new RuntimeException("Only the Party Owner can view pending quests logs.");
         }
-
-        // 3. Busca todas as quests pendentes daquela party (independente de quem é o reviewer)
         List<Quest> pendingQuests = questRepository.findByPartyIdAndStatus(party.getId(), QuestStatus.PENDING_APPROVAL);
 
         return pendingQuests.stream().map(QuestResponseDTO::new).toList();
