@@ -120,6 +120,19 @@ spring.jpa.show-sql=true
 api.security.token.secret=${JWT_SECRET:my-secret-key}
 ```
 
+### JWT secret
+
+Tokens are signed with HMAC-SHA256 using `api.security.token.secret`, which is read from the
+`JWT_SECRET` environment variable. The `my-secret-key` fallback exists **only for local
+development**. Anyone who knows the secret can forge tokens for any user, so for any
+shared, staging or production environment always set a long random value:
+
+```bash
+export JWT_SECRET="$(openssl rand -base64 48)"
+```
+
+Changing the secret invalidates all previously issued tokens.
+
 ---
 
 ##  Running the App
@@ -172,6 +185,7 @@ Instead, environment variables were injected at runtime via a startup script on 
 export DB_URL='jdbc:postgresql://<rds-endpoint>:5432/<database>'
 export DB_USERNAME='<db-username>'
 export DB_PASSWORD='<db-password>'
+export JWT_SECRET='<long-random-secret>'
 
 nohup java -Dspring.profiles.active=prod \
            -Dspring.datasource.url=$DB_URL \
