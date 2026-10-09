@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13.22
+        env:
+          POSTGRES_USER: Sprint_user
+          POSTGRES_PASSWORD: Sprint_pass
+          POSTGRES_DB: Sprint_DB
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U Sprint_user -d Sprint_DB"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/Sprint_DB
+      SPRING_DATASOURCE_USERNAME: Sprint_user
+      SPRING_DATASOURCE_PASSWORD: Sprint_pass
+      JWT_SECRET: ci-only-test-secret
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build and test
+        run: ./mvnw -B verify
