@@ -1,0 +1,55 @@
+package com.mypartyquests.controller;
+
+import com.mypartyquests.dto.response.UserResponseDTO;
+import com.mypartyquests.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/user")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @Operation(summary = "Get All Users",
+            description = "Returns all users.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = UserController.class))}),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping(value = "/all")
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
+
+        return ResponseEntity.ok(userService.findAllUsers());
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> getCurrentUser() {
+        UserResponseDTO userDTO = userService.getMe();
+
+        return ResponseEntity.ok(userDTO);
+    }
+
+    @Operation(summary = "Delete User",
+            description = "Delete a existent user.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Usuário removido com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+    })
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id){
+        userService.deleteUser(id);
+
+        return ResponseEntity.noContent().build();
+    }
+}
