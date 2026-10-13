@@ -1,264 +1,98 @@
+# My Party Quests — Everyday goals as RPG quests
 
-![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white)
-![Spring](https://img.shields.io/badge/spring-%236DB33F.svg?style=for-the-badge&logo=spring&logoColor=white)
-![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/postgresql-%23316192.svg?style=for-the-badge\&logo=postgresql\&logoColor=white)
-![Swagger](https://img.shields.io/badge/swagger-openapi-%23Clojure?style=for-the-badge\&logo=swagger\&logoColor=white)
+A gamified web application where friends form a party, plan quests and track
+progress through an RPG-inspired interface.
 
-**My Party Quests** is a gamified web application inspired by classic RPGs, built for friends who want to turn everyday challenges into quests and enjoy progression, feedback, and interaction in a playful environment.
+**Status:** Portfolio MVP · Personal learning project.
 
-The project combines **Spring Boot** and **Spring Security (JWT)** to deliver a complete experience: a REST API with OpenAPI documentation, secure authentication, and a pixel-art themed UI.
+[![CI](https://github.com/ErickHTF/My-Party-Quests/actions/workflows/ci.yml/badge.svg)](https://github.com/ErickHTF/My-Party-Quests/actions/workflows/ci.yml)
 
+[Run locally](#run-locally) · [Development guide](docs/development.md) ·
+[Architecture](docs/architecture.md) · [API reference](docs/api.md)
 
-## Interface Preview
+![Party dashboard with character progress and group information](docs/screenshots/dashboard.jpg)
 
-|  **Login** |  **Dashboard** |
-|:---:|:---:|
-| <img src="assets/Login_UI.png" width="400" alt="Login"> | <img src="assets/Dashboard_UI.png" width="400" alt="Dashboard"> |
+| Login                                                 | Quest workspace                                                    |
+| ----------------------------------------------------- | ------------------------------------------------------------------ |
+| ![Pixel-art login screen](docs/screenshots/login.jpg) | ![Quest workspace for planning goals](docs/screenshots/quests.jpg) |
 
-| **Create Quest** | **Leaderboard** |
-|:---:|:---:|
-| <img src="assets/Quests_UI.png" width="400" alt="Quest Form"> | <img src="assets/Leaderboard_UI.png" width="400" alt="Party View"> |
-
-## Table of Contents
-- [Overview](#overview)
-- [Game Concepts](#game-concepts)
-- [Tech Stack](#tech-stack)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Running the App](#running-the-app)
-- [Deployment (Reference Architecture)](#deployment-reference-architecture)
-- [API & Swagger](#api--swagger)
-- [Project Structure](#project-structure)
-- [Security](#security)
-- [Project Status](#project-status)
-  
----
+_Screenshots show the running application with synthetic local demo data._
 
 ## Overview
 
-My Party Quests started as a hands-on learning project designed to turn daily routines into an RPG. Instead of strict productivity, the goal is to make habit-building social and visually rewarding by watching your character level up.
+My Party Quests turns daily routines into shared challenges. A party moves
+through planning, execution and review while members manage quests and rewards.
 
-Key Features:
+- Create a party and manage membership requests.
+- Plan quests with rarity-based XP and gold rewards.
+- Review other members' quests and track completion.
+- Follow character progression and group rankings.
 
-Group System: Join forces with friends to track progress together.
+## Stack
 
-Custom Missions: Transform boring tasks into shareable challenges.
+| Layer             | Technologies                                   |
+| ----------------- | ---------------------------------------------- |
+| Frontend          | HTML, CSS, JavaScript, Alpine.js, Tailwind CSS |
+| Backend           | Java 17, Spring Boot 3, Spring Security, JWT   |
+| Database          | PostgreSQL 13, Spring Data JPA                 |
+| API documentation | Swagger UI, OpenAPI                            |
+| Verification      | Maven, JUnit, GitHub Actions                   |
 
-Peer Validation: Review your friends' activity to keep everyone consistent.
+## Run locally
 
-Progression: Earn XP and gold for achievements, not just busywork.
-
----
-
-##  Game Concepts
-
-* **User (Adventurer)**: A registered player with level, XP, and gold.
-* **Party**: A team led by an owner (Guild Master).
-* **Quest**: A task created by a party member and reviewed by another member.
-* **Phases**:
-
-  * **LOBBY** – Party setup and member management
-  * **PLANNING** – Quest creation, review, approval, and refinement
-  * **EXECUTION** – Quest execution
-  * **REVIEW** – Results overview and wrap-up
-
----
-
-## Tech Stack
-
-* **Java 17**
-* **Spring Boot 3**
-
-  * Spring Web MVC
-  * Spring Data JPA
-  * Spring Security (JWT)
-* **PostgreSQL**
-* **Swagger / OpenAPI** (springdoc)
-* **Maven**
-
----
-
-##  Installation
-
-### Requirements
-
-* Java JDK 17+
-* Maven
-* Docker & Docker Compose
-
-### Database Setup
-
-The project uses PostgreSQL via Docker.
+Install **Java 17+**, **Git**, and **Docker with Docker Compose**. Maven is
+included through the wrapper.
 
 ```bash
-# From the project root
-docker-compose up -d
-```
-
-Default credentials:
-
-* **User:** `Sprint_user`
-* **Password:** `Sprint_pass`
-* **Database:** `Sprint_DB`
-* **Port:** `5433`
-
----
-
-##  Configuration
-
-Main application properties (development profile):
-
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5433/Sprint_DB
-spring.datasource.username=Sprint_user
-spring.datasource.password=Sprint_pass
-
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-
-api.security.token.secret=${JWT_SECRET:my-secret-key}
-```
-
-### JWT secret
-
-Tokens are signed with HMAC-SHA256 using `api.security.token.secret`, which is read from the
-`JWT_SECRET` environment variable. The `my-secret-key` fallback exists **only for local
-development**. Anyone who knows the secret can forge tokens for any user, so for any
-shared, staging or production environment always set a long random value:
-
-```bash
-export JWT_SECRET="$(openssl rand -base64 48)"
-```
-
-Changing the secret invalidates all previously issued tokens.
-
----
-
-##  Running the App
-
-With the database running:
-
-```bash
+git clone https://github.com/ErickHTF/My-Party-Quests.git
+cd My-Party-Quests
+docker compose up -d
 ./mvnw spring-boot:run
 ```
 
-The application will be available at:
+Open [localhost:8080/index.html](http://localhost:8080/index.html), register an account and log in.
+The frontend is served by Spring Boot. PostgreSQL uses port `5433`.
 
-```
-http://localhost:8080
-```
+See the [development guide](docs/development.md) for database settings and JWT
+configuration. The frontend loads Alpine.js, Tailwind and fonts from external
+CDNs, so its full presentation requires an internet connection.
 
----
-
-## Deployment (Reference Architecture – AWS)
-
-> ⚠️ This AWS setup is documented as a reference architecture.
-> Infrastructure was decommissioned after validation to avoid costs.
-
-This setup demonstrates:
-- A production-like AWS environment
-- Secure configuration management
-- Separation between local and production concerns
-
-
-### Environment Overview
-
-| Component | Technology |
-|---------|------------|
-| OS | Amazon Linux 2023 |
-| Runtime | Spring Boot (JAR) |
-| Database | PostgreSQL (Amazon RDS) |
-| Profile | `prod` |
-
-
-### Secrets & Configuration
-Sensitive credentials were **not hardcoded**.
-Instead, environment variables were injected at runtime via a startup script on the server.
-
-### Production Startup Script (Example)
-
-> This script illustrates how environment variables were injected
-> at runtime in a production environment.
+## Verification
 
 ```bash
-export DB_URL='jdbc:postgresql://<rds-endpoint>:5432/<database>'
-export DB_USERNAME='<db-username>'
-export DB_PASSWORD='<db-password>'
-export JWT_SECRET='<long-random-secret>'
-
-nohup java -Dspring.profiles.active=prod \
-           -Dspring.datasource.url=$DB_URL \
-           -Dspring.datasource.username=$DB_USERNAME \
-           -Dspring.datasource.password=$DB_PASSWORD \
-           -jar app.jar > logs.txt 2>&1 &
+./mvnw verify
 ```
 
-### Architecture at a Glance
+The existing tests cover application startup and token handling. CI starts a
+PostgreSQL service for the backend verification.
 
-Client → EC2 (Spring Boot – prod) → RDS PostgreSQL
+## Architecture
 
-
-
-##  API & Swagger
-
-The REST API is fully documented with Swagger/OpenAPI.
-
-* **Swagger UI:**
-
-  ```
-  http://localhost:8080/swagger-ui/index.html
-  ```
-
-Main API domains:
-
-* **Authentication** – `/auth`
-* **Users** – `/user`
-* **Parties** – `/parties`
-* **Quests** – `/quests`
-
----
-
-##  Party (Sprint) Flow
-
-1. Create a **Party** (owner becomes Guild Master)
-2. Members request to join and get approved
-3. Move from **LOBBY → PLANNING**
-4. Create **Quests**
-5. Move to **EXECUTION** (reviewers assigned)
-6. Review, approve, and complete quests
-7. Move to **REVIEW** and finalize the sprint
-8. Reset to **LOBBY** for a new cycle
-
----
-
-##  Project Structure
-
-```
-├── controller   # REST & MVC controllers
-├── service      # Business logic
-├── repository   # JPA repositories
-├── model        # Entities
-├── dto          # Data Transfer Objects
-├── security     # JWT & Spring Security config
-├── exception    # Global exception handling
-└── resources
-    └── static    # HTML, CSS, JS, images, assets
+```mermaid
+flowchart LR
+    Browser[HTML / Alpine.js] -->|HTTP + JWT| API[Spring Boot API]
+    API --> Service[Party / quest / user services]
+    Service -->|JPA| DB[(PostgreSQL)]
 ```
 
----
+Spring Boot serves both the static interface and REST API. Controllers delegate
+to services and repositories, while Spring Security handles JWT authentication.
+Party phases organize the game workflow. Read the
+[architecture guide](docs/architecture.md) for the game concepts and source layout.
 
-##  Security
+## Documentation
 
-* JWT-based authentication
-* Role-based access control
-* Protected endpoints for party ownership and quest review
+| Guide                                | Contents                                                   |
+| ------------------------------------ | ---------------------------------------------------------- |
+| [Development](docs/development.md)   | Local setup, database and JWT configuration                |
+| [Architecture](docs/architecture.md) | Party phases, game concepts and package responsibilities   |
+| [API reference](docs/api.md)         | API domains and Swagger UI                                 |
+| [AWS reference](docs/deployment.md)  | Previous EC2/RDS deployment; infrastructure decommissioned |
 
----
+## Project context
 
-## Project Status
+Built to explore Java backend development and social habit tracking with an RPG
+visual identity. The AWS setup is preserved as a reference; that infrastructure
+was decommissioned after validation.
 
-**MVP Completed (v1.0)**
-All core features are implemented and the project is stable for portfolio demonstration.
-
-
+No license is currently included in this repository.
